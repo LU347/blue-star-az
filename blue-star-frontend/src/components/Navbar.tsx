@@ -9,11 +9,14 @@ export default function Navbar() {
                 </Link>
             </div>
             <div className="flex items-center space-x-4">
-                <Link href="login" className="px-4 py-2 rounded">
+                <Link href="/login" className="px-4 py-2 rounded">
                     Login
                 </Link>
                 <Link href="/signup" className="px-4 py-2 rounded">
                     Signup
+                </Link>
+                <Link href="/profile" className="px-4 py-2 rounded">
+                    Profile
                 </Link>
             </div>
         </div>

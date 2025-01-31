@@ -7,6 +7,7 @@ interface FormField {
     type: string;
     placeholder: string;
     ariaLabel: string;
+    options?: { value: string; label: string }[];
 }
 
 interface FormComponentProps {
@@ -37,12 +38,30 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 {fields.map((field, index) => (
                     <div key={index} className={styles.formField}>
                         <label htmlFor={field.name}>{field.label}</label>
-                        <input
-                            name={field.name}
-                            type={field.type}
-                            placeholder={field.placeholder}
-                            aria-labelledby={field.ariaLabel}
-                        />
+                        {
+                            field.type === "select" ? (
+                                <select
+                                    name={field.name}
+                                    aria-labelledby={field.ariaLabel}
+                                    defaultValue=""
+                                >
+                                    <option value="">{field.placeholder}</option>
+                                    {
+                                        field.options?.map((option, idx) => (
+                                            <option key={idx} value={option.value}>{option.label}</option>
+                                        ))
+                                    }
+                                </select>
+                            ) : (
+                                <input
+                                    name={field.name}
+                                    type={field.type}
+                                    placeholder={field.placeholder}
+                                    aria-labelledby={field.ariaLabel}
+                                />
+                            )
+                        }
+
                     </div>
                 ))}
                 <button type="submit">{buttonText}</button>

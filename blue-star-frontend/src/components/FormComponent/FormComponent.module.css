@@ -45,7 +45,6 @@
     font-size: 1rem;
     border: 0.313rem solid #ccc;
     border-radius: 1rem;
-    color: black;
 }
 
 .form input:focus {
@@ -63,16 +62,24 @@
     transition: background-color 0.3s ease;
 }
 
-.formField {
-    margin: 0.25rem;
-}
-
 .form button:hover {
     background-color: #1f4582;
 }
 
 .formField {
+    margin: 0.25rem;
     display: flex;
     flex-direction: column;
+}
+
+.formField select {
+    padding: 1rem;
+    border: 0.313rem solid #ccc;
+    border-radius: 1rem;
+    color: black;
+}
+
+.formField input[type=text] {
+    color: black;
 }
 
