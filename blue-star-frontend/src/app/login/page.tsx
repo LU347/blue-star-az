@@ -1,16 +1,21 @@
-import Link from 'next/link';
+import FormComponent from "@/components/Form";
 
-export default function Login() {
+const Login: React.FC = () => {
+    const loginFields = [
+        { name: 'email', label: 'Email Address', type: 'email', placeholder: 'Email Address' },
+        { name: 'password', label: 'Password', type: 'password', placeholder: 'Password' },
+    ];
+
     return (
-        <div className="loginPage">
-            <form name="loginForm">
-                <label htmlFor="username">Username</label>
-                <input type="text" placeholder="Username"></input>
-                <label htmlFor="password">Password</label>
-                <input type="text" placeholder="Password"></input>
-                <button type="submit">Login</button>
-            </form>
-            <Link href="signup">Create Account</Link>
-        </div>
-    );
-}
+        <FormComponent
+            action="/login"
+            formName="loginForm"
+            fields={loginFields}
+            buttonText="Login"
+            linkText="Create Account"
+            linkHref="/signup"
+        />
+    )
+};
+
+export default Login;
