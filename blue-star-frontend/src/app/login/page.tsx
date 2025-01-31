@@ -1,4 +1,4 @@
-import FormComponent from "@/components/Form";
+import FormComponent from "@/components/FormComponent/Form";
 
 const Login: React.FC = () => {
     const loginFields = [
@@ -7,14 +7,17 @@ const Login: React.FC = () => {
     ];
 
     return (
-        <FormComponent
-            action="/login"
-            formName="loginForm"
-            fields={loginFields}
-            buttonText="Login"
-            linkText="Create Account"
-            linkHref="/signup"
-        />
+        <div className="flex flex-col items-center justify-center h-screen">
+            <FormComponent
+                title="Log in"
+                action="/login"
+                formName="loginForm"
+                fields={loginFields}
+                buttonText="Login"
+                linkText="Create Account"
+                linkHref="/signup"
+            />
+        </div>
     )
 };
 

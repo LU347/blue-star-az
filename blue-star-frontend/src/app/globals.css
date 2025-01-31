@@ -3,14 +3,31 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f0f4f7;
+  --foreground: #758292;
+  --interactive-color: #1899e4;
+  --interactive-text-color: #fffef9;
+  --form-background-color: #ffffff;
+}
+
+button {
+  color: var(--interactive-text-color);
+  background-color: var(--interactive-color);
+}
+
+a:hover {
+  color: var(--interactive-color)
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #000000;
+    --foreground: #DDE6ED;
+    --form-background-color: #181f2a;
+  }
+
+  button {
+    color: var(--foreground)
   }
 }
 

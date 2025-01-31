@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import styles from './FormComponent.module.css';
 
 interface FormField {
     name: string;
@@ -8,6 +9,7 @@ interface FormField {
 }
 
 interface FormComponentProps {
+    title: string;
     action: string;
     formName: string;
     fields: FormField[];
@@ -17,6 +19,7 @@ interface FormComponentProps {
 }
 
 const FormComponent: React.FC<FormComponentProps> = ({
+    title,
     action,
     formName,
     fields,
@@ -25,10 +28,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
     linkHref,
 }) => {
     return (
-        <div className="formPage">
-            <form action={action} name={formName}>
+        <div className={styles.formPage}>
+            <h1 className="text-3xl font-semibold mb-6">{title}</h1>
+            <form action={action} name={formName} className={styles.form}>
                 {fields.map((field, index) => (
-                    <div key={index} className="formField">
+                    <div key={index} className={styles.formField}>
                         <label htmlFor={field.name}>{field.label}</label>
                         <input
                             name={field.name}
