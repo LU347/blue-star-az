@@ -1,9 +1,7 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
-    <div>
-      Home page
+    <div className="grid h-screen place-items-center">
+      <div>Home Page</div>
     </div>
   );
 }
