@@ -7,18 +7,21 @@ const Signup: React.FC = () => {
             label: "Email Address",
             type: "email",
             placeholder: "Email Address",
+            ariaLabel: 'email_address_label'
         },
         {
             name: "password",
             label: "Password",
             type: "password",
             placeholder: "Password",
+            ariaLabel: 'password_label'
         },
         {
             name: "confirmPassword",
             label: "Confirm Password",
             type: "password",
             placeholder: "Password",
+            ariaLabel: 'confirm_password_label'
         },
     ];
 
@@ -32,6 +35,7 @@ const Signup: React.FC = () => {
                 buttonText="Sign Up"
                 linkText="Already have an account? Login"
                 linkHref="/login"
+                ariaLabel="Sign Up Form"
             />
         </div>
     );

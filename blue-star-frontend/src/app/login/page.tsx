@@ -2,8 +2,20 @@ import FormComponent from "@/components/FormComponent/Form";
 
 const Login: React.FC = () => {
     const loginFields = [
-        { name: 'email', label: 'Email Address', type: 'email', placeholder: 'Email Address' },
-        { name: 'password', label: 'Password', type: 'password', placeholder: 'Password' },
+        {
+            name: "email",
+            label: "Email Address",
+            type: "email",
+            placeholder: "Email Address",
+            ariaLabel: "email_address_label",
+        },
+        {
+            name: "password",
+            label: "Password",
+            type: "password",
+            placeholder: "Password",
+            ariaLabel: "password_label",
+        },
     ];
 
     return (
@@ -16,9 +28,10 @@ const Login: React.FC = () => {
                 buttonText="Login"
                 linkText="Create Account"
                 linkHref="/signup"
+                ariaLabel="Log in Form"
             />
         </div>
-    )
+    );
 };
 
 export default Login;
