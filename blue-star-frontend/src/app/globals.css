@@ -11,6 +11,10 @@
   --border-color: #64738b;
 }
 
+input {
+  color: black;
+}
+
 button {
   color: var(--interactive-text-color);
   background-color: var(--interactive-color);

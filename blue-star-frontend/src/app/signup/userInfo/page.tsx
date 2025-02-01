@@ -1,5 +1,7 @@
 import FormComponent from "@/components/FormComponent/Form";
 
+// Address format based on https://support.govx.com/article?id=1176&sectionId=1025
+
 const UserInfo: React.FC = () => {
     const formFields = [
         {
@@ -43,31 +45,19 @@ const UserInfo: React.FC = () => {
             ]
         },
         {
-            name: "country",
-            label: "Country / Region",
-            type: "select",
-            placeholder: "Select Country",
-            ariaLabel: "country_label",
-            //TODO: Add more countries
-            options: [
-                { value: "us", label: "United States" },
-                { value: "australia", label: "Australia" },
-                { value: "bahrain", label: "Bahrain" },
-                { value: "belgium", label: "Belgium" },
-                { value: "djibouti", label: "Djibouti" },
-                { value: "germany", label: "Germany" },
-                { value: "italy", label: "Italy" },
-                { value: "japan", label: "Japan" },
-                { value: "south_korea", label: "South Korea" },
-            ]
+            name: "address_one",
+            label: "Address Line 1",
+            type: "text",
+            placeholder: "USS Nimitz (CVN 68) / PSC 1234 / Unit 7400",
+            ariaLabel: "address_one_label",
         },
         {
-            name: "address",
-            label: "Address",
+            name: "address_two",
+            label: "Address Line 2",
             type: "text",
-            placeholder: "Address",
-            ariaLabel: "address_label",
-        }, 
+            placeholder: "DPO, AE, 09498-0048 / APO AE 09204-1234",
+            ariaLabel: "address_two_label"
+        },
         {
             name: "city",
             label: "City / Town",
