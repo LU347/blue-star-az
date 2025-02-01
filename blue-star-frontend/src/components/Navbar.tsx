@@ -2,7 +2,7 @@ import Link from "next/link"
 
 export default function Navbar() {
     return (
-        <div className="flex justify-between p-4 h-16 rounded-xl border-b-2">
+        <div className="flex justify-between p-4 h-16 rounded-xl border-b-2 border-slate-500">
             <div className="flex items-center">
                 <Link href="/" className="text-xl font-bold">
                     Blue Star AZ

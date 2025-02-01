@@ -8,6 +8,7 @@
   --interactive-color: #1899e4;
   --interactive-text-color: #fffef9;
   --form-background-color: #ffffff;
+  --border-color: #64738b;
 }
 
 button {
@@ -24,6 +25,7 @@ a:hover {
     --background: #000000;
     --foreground: #DDE6ED;
     --form-background-color: #181f2a;
+    --border-color: #263141;
   }
 
   button {
