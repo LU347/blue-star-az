@@ -12,3 +12,43 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum UserType {
+  SERVICE_MEMBER
+  VOLUNTEER
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  password    String
+  firstName   String   @map("first_name")
+  lastName    String   @map("last_name")
+  phoneNumber String?  @map("phone_number")
+  userType    UserType
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  serviceMember ServiceMember? @relation("UserServiceMember")
+  volunteer     Volunteer?     @relation("UserVolunteer")
+}
+
+model ServiceMember {
+  userId       Int     @id
+  addressLine1 String
+  addressLine2 String?
+  branch       String
+  user         User    @relation("UserServiceMember", fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model Volunteer {
+  userId Int  @id
+  user   User @relation("UserVolunteer", fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
