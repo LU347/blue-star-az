@@ -10,19 +10,19 @@ To improve the efficiency and impact of the Blue Star Mothers of Maricopa, AZ Ch
 ## Blue Star AZ Tech Stack 
 Frontend (Next.js)
 * Framework: Next.js
-* Language: JavaScript/TypeScript
-* UI Library: Material, UI, Ant Design, etc
-* State Management: Redux, Zustand or Context API
+* Language: TypeScript
+* UI Library: Material UI, Tailwind CSS
+* State Management: Context API
 * Styling: CSS Modules, Styled Components
-* Data Fetching: fetch, axios, or SWR
+* Data Fetching: Axios
 
-Backend (Java) (not implemented yet)
-* Framework: Sprint Boot
-* Language: Java
-* API: RESTful APIS (using Spring REST)
-* Database: PostgreSQL or MySQL
-* Authentication: Spring Security
+Backend 
+* Framework: Next.js
+* Database: PostgreSQL
+* Authentication: NextAuth.js
+* API: RESTful API using Next.js API routes
 
+Deploying with Turborepo & Vercel
 
 # How to Contribute
 
@@ -43,6 +43,16 @@ git clone https://github.com/LU347/blue-star-az.git
 ```
 
 ## 3. **Create a branch and Make Your Changes**
+
+To start the development server run:
+
+```bash
+npm install
+```
+
+```bash
+npm run dev
+```
 
 ## 4. **Submit a Pull Request**
 
