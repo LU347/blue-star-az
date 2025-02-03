@@ -23,6 +23,16 @@ enum Gender {
   FEMALE
 }
 
+enum Branch {
+  ARMY
+  NAVY
+  AIR_FORCE
+  SPACE_FORCE
+  COAST_GUARD
+  NATIONAL_GUARD
+  MARINES
+}
+
 model User {
   id          Int      @id @default(autoincrement())
   email       String   @unique
@@ -44,7 +54,7 @@ model ServiceMember {
   userId       Int     @id
   addressLine1 String
   addressLine2 String?
-  branch       String
+  branch       Branch
   country      String?
   state        String?
   user         User    @relation("UserServiceMember", fields: [userId], references: [id], onDelete: Cascade)
