@@ -1,6 +1,9 @@
 -- CreateEnum
 CREATE TYPE "UserType" AS ENUM ('SERVICE_MEMBER', 'VOLUNTEER');
 
+-- CreateEnum
+CREATE TYPE "Gender" AS ENUM ('MALE', 'FEMALE');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
@@ -10,6 +13,7 @@ CREATE TABLE "User" (
     "last_name" TEXT NOT NULL,
     "phone_number" TEXT,
     "userType" "UserType" NOT NULL,
+    "gender" "Gender" NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -22,6 +26,8 @@ CREATE TABLE "ServiceMember" (
     "addressLine1" TEXT NOT NULL,
     "addressLine2" TEXT,
     "branch" TEXT NOT NULL,
+    "country" TEXT,
+    "state" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 

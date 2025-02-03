@@ -18,6 +18,11 @@ enum UserType {
   VOLUNTEER
 }
 
+enum Gender {
+  MALE
+  FEMALE
+}
+
 model User {
   id          Int      @id @default(autoincrement())
   email       String   @unique
@@ -26,6 +31,7 @@ model User {
   lastName    String   @map("last_name")
   phoneNumber String?  @map("phone_number")
   userType    UserType
+  gender      Gender
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -39,6 +45,8 @@ model ServiceMember {
   addressLine1 String
   addressLine2 String?
   branch       String
+  country      String?
+  state        String?
   user         User    @relation("UserServiceMember", fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now()) @map("created_at")
