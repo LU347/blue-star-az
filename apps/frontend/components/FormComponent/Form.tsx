@@ -8,6 +8,7 @@ interface FormField {
     placeholder: string;
     ariaLabel: string;
     options?: { value: string; label: string }[];
+    required?: boolean;
 }
 
 interface FormComponentProps {
@@ -37,7 +38,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
             <form action={action} name={formName} className={styles.form} aria-label={ariaLabel}>
                 {fields.map((field, index) => (
                     <div key={index} className={styles.formField}>
-                        <label htmlFor={field.name}>{field.label}</label>
+                        <label htmlFor={field.name}>
+                            {field.label}
+                            {field.required && <span style={{ color: 'red' }}> * </span>}
+                        </label>
                         {
                             field.type === "select" ? (
                                 <select
