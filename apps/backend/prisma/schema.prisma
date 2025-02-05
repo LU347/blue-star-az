@@ -51,13 +51,13 @@ model User {
 }
 
 model ServiceMember {
-  userId       Int     @id
-  addressLine1 String
-  addressLine2 String?
-  branch       Branch
-  country      String?
-  state        String?
-  user         User    @relation("UserServiceMember", fields: [userId], references: [id], onDelete: Cascade)
+  userId         Int     @id
+  addressLineOne String
+  addressLineTwo String?
+  branch         Branch
+  country        String?
+  state          String?
+  user           User    @relation("UserServiceMember", fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
