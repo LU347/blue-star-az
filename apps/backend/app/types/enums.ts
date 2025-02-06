@@ -5,12 +5,15 @@ export enum Error {
     INTERNAL_ERR = "Internal server error",
     INVALID_CREDENTIALS = "Invalid credentials",
     INVALID_TYPE = "Invalid type",
-    VALIDATION_ERR = "Validation error"
+    VALIDATION_ERR = "Validation error",
+    UNAUTHORIZED = "Unauthorized action",
+    UNDEFINED = " is undefined"
 }
 
 export enum Status {
     REGISTER_SUCCESS = "User registered successfully!",
-    LOGIN_SUCCESS = "User logged in successfully!'"
+    LOGIN_SUCCESS = "User logged in successfully!",
+    LOGOUT_SUCCESS = "User logged out successfully!"
 }
 
 export enum UserTypes {
