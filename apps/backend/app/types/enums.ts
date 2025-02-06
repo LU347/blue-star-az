@@ -3,12 +3,14 @@ export enum Error {
     MISSING_FIELDS = "Missing fields",
     USER_EXISTS = "User already exists",
     INTERNAL_ERR = "Internal server error",
+    INVALID_CREDENTIALS = "Invalid credentials",
     INVALID_TYPE = "Invalid type",
     VALIDATION_ERR = "Validation error"
 }
 
 export enum Status {
     REGISTER_SUCCESS = "User registered successfully!",
+    LOGIN_SUCCESS = "User logged in successfully!'"
 }
 
 export enum UserTypes {
