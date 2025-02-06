@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Gender, PrismaClient, UserType } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { Error, Status, UserTypes, Branch} from './enums';
+import { Error, Status, UserTypes, Branch} from "app/types/enums";
 
 const prisma = new PrismaClient();
 
@@ -9,6 +9,14 @@ function isEnumValue(enumObj: any, value: any): boolean {
     return Object.values(enumObj).includes(value);
 }
 
+/*
+    Validates user input:
+    - Checks if any of the required fields are missing
+    - Checks if the proper enum values are used
+    - Checks if the user is a volunteer and doesn't contain any serviceMember fields
+    - Checks if the user is a service member and is missing the required branch value
+    - Returns an appropriate response based on success / failure.
+*/
 function validateUserInput(body: any) {
     const requiredFields = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
     for (const field of requiredFields) {
