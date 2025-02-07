@@ -4,10 +4,13 @@ export enum Error {
     USER_EXISTS = "User already exists",
     INTERNAL_ERR = "Internal server error",
     INVALID_CREDENTIALS = "Invalid credentials",
+    INVALID_TOKEN = "Invalid token",
     INVALID_TYPE = "Invalid type",
     VALIDATION_ERR = "Validation error",
     UNAUTHORIZED = "Unauthorized action",
-    UNDEFINED = " is undefined"
+    UNDEFINED = " is undefined",
+    TOKEN_EXPIRED = "Session expired",
+    DATABASE_ERROR = "DB Error",
 }
 
 export enum Status {
