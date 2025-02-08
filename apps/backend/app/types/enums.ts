@@ -1,7 +1,8 @@
-export enum Error {
+export enum UserError {
     INVALID_METHOD = "Invalid method",
     MISSING_FIELDS = "Missing fields",
     USER_EXISTS = "User already exists",
+    USER_NONEXISTENT = "User does not exist",
     INTERNAL_ERR = "Internal server error",
     INVALID_CREDENTIALS = "Invalid credentials",
     INVALID_TOKEN = "Invalid token",

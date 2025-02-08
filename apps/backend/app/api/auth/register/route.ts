@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Gender, PrismaClient, UserType } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { Error, Status, Branch} from "app/types/enums";
+import { UserError, Status, Branch} from "app/types/enums";
 
 const prisma = new PrismaClient();
 
@@ -21,29 +21,29 @@ export function validateUserInput(body: any) {
     const requiredFields = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
     for (const field of requiredFields) {
         if (!body[field]) {
-            return { error: Error.MISSING_FIELDS, status: 400 };
+            return { error: UserError.MISSING_FIELDS, status: 400 };
         }
     }
 
     if (!isEnumValue(UserType, body.userType)) {
-        return { error: Error.INVALID_TYPE, status: 400 };
+        return { error: UserError.INVALID_TYPE, status: 400 };
     }
 
     if (!isEnumValue(Gender, body.gender)) {
-        return { error: Error.INVALID_TYPE, status: 400 };
+        return { error: UserError.INVALID_TYPE, status: 400 };
     }
 
     if (body.userType === UserType.VOLUNTEER && (body.branch || body.addressLineOne || body.addressLineTwo || body.country || body.state)) {
-        return { error: Error.VALIDATION_ERR, status: 400 };
+        return { error: UserError.VALIDATION_ERR, status: 400 };
     }
 
     if (body.userType === UserType.SERVICE_MEMBER) {
         if (!body.branch) {
-            return { error: Error.MISSING_FIELDS, status: 400 };
+            return { error: UserError.MISSING_FIELDS, status: 400 };
         }
 
         if (!isEnumValue(Branch, body.branch)) {
-            return { error: Error.INVALID_TYPE, status: 400 };
+            return { error: UserError.INVALID_TYPE, status: 400 };
         }
     }
 
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
-            return NextResponse.json({ error: Error.USER_EXISTS }, { status: 400 });
+            return NextResponse.json({ error: UserError.USER_EXISTS }, { status: 400 });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -103,6 +103,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: Status.REGISTER_SUCCESS }, { status: 201 });
     } catch (error) {
         console.error("Registration error:", error);
-        return NextResponse.json({ error: Error.INTERNAL_ERR }, { status: 500 });
+        return NextResponse.json({ error: UserError.INTERNAL_ERR }, { status: 500 });
     }
 }

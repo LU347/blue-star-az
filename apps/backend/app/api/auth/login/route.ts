@@ -2,10 +2,24 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { Error, Status } from "app/types/enums";
+import { UserError, Status } from "app/types/enums";
 
 const prisma = new PrismaClient();
 
+interface LoginRequestBody {
+    email: string;
+    password: string;
+}
+
+export function validateUserInput(body: any) {
+    const requiredFields: (keyof LoginRequestBody)[] = ['email', 'password'];
+    for (const field of requiredFields) {
+        if (!body[field]) {
+            return { error: UserError.MISSING_FIELDS, status: 400 };
+        }
+    }
+    return null;
+}
 /*
     Handles user login:
     - Parses the incoming POST request.
@@ -16,31 +30,39 @@ const prisma = new PrismaClient();
 */
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
-        const { email, password } = body;
-
-        if (!email || !password) {
-            return NextResponse.json({ error: Error.MISSING_FIELDS}, { status: 400 });
+        const body: LoginRequestBody = await req.json();
+        const validationError = validateUserInput(body);
+        if (validationError) {
+            return NextResponse.json(validationError, { status: validationError.status });
         }
 
+        const { email, password } = body;
         const user = await prisma.user.findUnique({
             where: { email },
         });
 
         if (!user) {
-            return NextResponse.json({ error: Error.INVALID_CREDENTIALS }, { status: 400 });
+            return NextResponse.json({ error: UserError.USER_NONEXISTENT }, { status: 401 });
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return NextResponse.json({ error: Error.INVALID_CREDENTIALS }, { status: 401 });
+            return NextResponse.json({ error: UserError.INVALID_CREDENTIALS }, { status: 401 });
         }
 
-        const token = jwt.sign({ userId: user.id, userType: user.userType }, `${process.env.JWT_SECRET}`, { expiresIn: '1h' });
+        const tokenSecret = process.env.JWT_SECRET;
+        if (!tokenSecret) {
+            throw new Error("JWT_SECRET is not defined in environment variables.");
+}
+        const token = jwt.sign(
+            { userId: user.id, userType: user.userType },
+            tokenSecret, 
+            { expiresIn: '1h' }
+        );
 
         return NextResponse.json({ message: Status.LOGIN_SUCCESS, token }, { status: 200 });
     } catch (error) {
         console.error("Login error:", error);
-        return NextResponse.json({ error: Error.INTERNAL_ERR }, { status: 500 });
+        return NextResponse.json({ error: UserError.INTERNAL_ERR }, { status: 500 });
     }
 }
