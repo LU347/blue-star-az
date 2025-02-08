@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Gender, PrismaClient, UserType } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { Error, Status, UserTypes, Branch} from "app/types/enums";
+import { Error, Status, Branch} from "app/types/enums";
 
 const prisma = new PrismaClient();
 
@@ -17,7 +17,7 @@ function isEnumValue(enumObj: any, value: any): boolean {
     - Checks if the user is a service member and is missing the required branch value
     - Returns an appropriate response based on success / failure.
 */
-function validateUserInput(body: any) {
+export function validateUserInput(body: any) {
     const requiredFields = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
     for (const field of requiredFields) {
         if (!body[field]) {
@@ -25,7 +25,7 @@ function validateUserInput(body: any) {
         }
     }
 
-    if (!isEnumValue(UserTypes, body.userType)) {
+    if (!isEnumValue(UserType, body.userType)) {
         return { error: Error.INVALID_TYPE, status: 400 };
     }
 
@@ -33,21 +33,21 @@ function validateUserInput(body: any) {
         return { error: Error.INVALID_TYPE, status: 400 };
     }
 
-    if (body.userType === UserType.VOLUNTEER && (body.branch || body.addressLineOne || body.addressLineTwo || body.country || body.state )) {
-        return NextResponse.json({ error: Error.VALIDATION_ERR}, { status: 400 });
+    if (body.userType === UserType.VOLUNTEER && (body.branch || body.addressLineOne || body.addressLineTwo || body.country || body.state)) {
+        return { error: Error.VALIDATION_ERR, status: 400 };
     }
 
     if (body.userType === UserType.SERVICE_MEMBER) {
         if (!body.branch) {
-            return NextResponse.json({ error: Error.MISSING_FIELDS }, { status: 400 });
+            return { error: Error.MISSING_FIELDS, status: 400 };
         }
 
         if (!isEnumValue(Branch, body.branch)) {
-            return NextResponse.json({ error: Error.INVALID_TYPE }, { status: 400 });
+            return { error: Error.INVALID_TYPE, status: 400 };
         }
     }
 
-    return null;
+    return null; // Validation passes
 }
 
 /*
@@ -63,11 +63,11 @@ export async function POST(req: Request) {
         const body = await req.json();
         const validationError = validateUserInput(body);
         if (validationError) {
-            return NextResponse.json({error: Error.INVALID_TYPE });
+            return NextResponse.json(validationError, { status: validationError.status });
         }
 
         const { firstName, lastName, email, password, phoneNumber, userType, gender, addressLineOne, addressLineTwo, branch, country, state } = body;
-        
+
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
             return NextResponse.json({ error: Error.USER_EXISTS }, { status: 400 });
@@ -87,9 +87,8 @@ export async function POST(req: Request) {
             },
         });
 
-        // Only create a ServiceMember if the userType is SERVICE_MEMBER
         if (userType === UserType.SERVICE_MEMBER) {
-            const newServiceMember = await prisma.serviceMember.create({
+            await prisma.serviceMember.create({
                 data: {
                     userId: newUser.id,
                     addressLineOne,

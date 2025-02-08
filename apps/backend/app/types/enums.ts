@@ -24,6 +24,11 @@ export enum UserTypes {
     VOLUNTEER = "VOLUNTEER",
 }
 
+export enum Gender {
+    MALE = "MALE",
+    FEMALE = "FEMALE"
+}
+
 export enum Branch {
     ARMY = "ARMY",
     NAVY = "NAVY",

@@ -57,11 +57,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: Status.LOGOUT_SUCCESS }, { status: 200 });
         } catch (prismaError: any) { 
             console.error("Prisma error during logout:", prismaError); 
-            return NextResponse.json({ error: Error.DATABASE_ERROR }, { status: 500 }); /
+            return NextResponse.json({ error: Error.DATABASE_ERROR }, { status: 500 }); 
         }
 
     } catch (error: any) { 
-        console.error("Unexpected logout error:", error); /
+        console.error("Unexpected logout error:", error); 
         return NextResponse.json({ error: Error.INTERNAL_ERR }, { status: 500 });
     } finally {
         await prisma.$disconnect(); 
