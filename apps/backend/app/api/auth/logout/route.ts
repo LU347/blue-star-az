@@ -30,7 +30,6 @@ export async function POST(req: Request) {
 
         try {
             const decoded = jwt.verify(token, jwtSecret);
-            console.log(decoded);
         } catch (jwtError: any) {
             if (jwtError.name === "TokenExpiredError") {
                 return NextResponse.json({ error: UserError.TOKEN_EXPIRED }, { status: 401 });
