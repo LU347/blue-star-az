@@ -11,6 +11,16 @@ interface LoginRequestBody {
     password: string;
 }
 
+/**
+ * Validates that the request body includes the required login fields.
+ *
+ * This function checks for the presence of the 'email' and 'password' properties in the provided body.
+ * If either required field is missing, it returns an error object containing the appropriate error code
+ * and a 400 HTTP status. If all required fields are present, it returns null.
+ *
+ * @param body - The request body to validate, expected to have 'email' and 'password' properties.
+ * @returns An object with error and status properties if validation fails, otherwise null.
+ */
 export function validateUserInput(body: any) {
     const requiredFields: (keyof LoginRequestBody)[] = ['email', 'password'];
     for (const field of requiredFields) {
@@ -20,14 +30,26 @@ export function validateUserInput(body: any) {
     }
     return null;
 }
-/*
-    Handles user login:
-    - Parses the incoming POST request.
-    - Validates that the required fields are provided.
-    - Checks if a user with the given email exists.
-    - Compares the password with the stored hashed password.
-    - Returns an appropriate response based on authentication success or failure.
-*/
+/**
+ * Handles user login via a POST request.
+ *
+ * This function processes the login attempt by performing the following steps:
+ * - Parses the incoming request body as JSON, expecting an object conforming to the LoginRequestBody interface.
+ * - Validates that the required fields (email and password) are provided using the validateUserInput function.
+ * - Queries the database for a user with the provided email.
+ * - If a user is found, compares the provided password with the stored hashed password using bcrypt.
+ * - Generates a JWT token signed with a secret (retrieved from environment variables) that includes the user's ID and type, set to expire in one hour.
+ * - Returns appropriate HTTP responses:
+ *    - 200 with a success message and the JWT token if authentication is successful.
+ *    - 400 if required fields are missing.
+ *    - 401 if the user does not exist or if the password is invalid.
+ *    - 500 for internal errors or if the JWT secret is not defined.
+ *
+ * @param req - The HTTP request object containing the login credentials in its JSON body.
+ * @returns A Promise that resolves to a NextResponse object with the outcome of the login attempt.
+ *
+ * @throws Error if the JWT secret is not defined in the environment variables.
+ */
 export async function POST(req: Request) {
     try {
         const body: LoginRequestBody = await req.json();
