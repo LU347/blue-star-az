@@ -245,6 +245,19 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: UserError.INTERNAL_ERR }, { status: 500 });
 
     } catch (error) {
+        console.error("Registration error:", error);
+        if (error instanceof PrismaClientKnownRequestError) {
+            return NextResponse.json(
+                { error: "Database operation failed" },
+                { status: 500 }
+            );
+        }
+        if (error instanceof Error) {
+            return NextResponse.json(
+                { error: error.message },
+                { status: 400 }
+            );
+        }
         return NextResponse.json({ error: "Registration failed" }, { status: 500 });
     }
 }
