@@ -3,9 +3,15 @@ import { Gender, PrismaClient, UserType, Branch} from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { UserError, Status, CreateUserRequest} from "app/types/enums";
 import { sanitize } from "class-sanitizer";
-import { escape } from "validator";
+import { escape as escapeHtml } from "validator";
 
-const prisma = new PrismaClient();
+declare global {
+    var prisma: PrismaClient | undefined;
+}
+
+const prisma = global.prisma || new PrismaClient();
+
+if (process.env.NODE_ENV !== 'production') global.prisma = prisma;
 
 function sanitizeInput(input: string): string {
     return escape(input.trim());
@@ -60,7 +66,7 @@ function sanitizeBody(body: CreateUserRequest) {
  *
  * const isValid = isEnumValue(UserRole, "ADMIN"); // returns true
  */
-function isEnumValue<T extends { [key: string]: string | number}>(enumObj: any, value: any): boolean {
+function isEnumValue<T extends { [key: string]: string | number}>(enumObj: T, value: T[keyof T]): boolean {
     return Object.values(enumObj).includes(value);
 }
 
@@ -177,7 +183,6 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
  * }
  */
 export async function POST(req: Request) {
-    console.log("test");
     try {
         const body = await req.json();
         const sanitizedBody = sanitizeBody(body);
