@@ -1,9 +1,35 @@
 import { NextResponse } from "next/server";
-import { Gender, PrismaClient, UserType } from "@prisma/client";
+import { Gender, PrismaClient, UserType, Branch} from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { UserError, Status, Branch, CreateUserRequest} from "app/types/enums";
+import { UserError, Status, CreateUserRequest} from "app/types/enums";
+import { sanitize } from "class-sanitizer";
+import { escape } from "validator";
 
 const prisma = new PrismaClient();
+
+function sanitizeInput(input: string): string {
+    return escape(input.trim());
+}
+
+function sanitizeBody(body: CreateUserRequest) {
+    const sanitizedBody = {
+        ...body,
+        email: sanitizeInput(body.email)?.toLowerCase() || "",
+        password: sanitizeInput(body.password),
+        firstName: sanitizeInput(body.firstName),
+        lastName: sanitizeInput(body.lastName),
+        phoneNumber: sanitizeInput(body.phoneNumber),
+        gender: body.gender as Gender,
+        branch: body.branch as Branch,
+        addressLineOne: sanitizeInput(body.addressLineOne ?? ""),
+        addressLineTwo: sanitizeInput(body.addressLineTwo ?? ""),
+        country: sanitizeInput(body.country ?? ""),
+        state: sanitizeInput(body.state ?? ""),
+        zipCode: sanitizeInput(body.zipCode ?? ""),
+        userType: body.userType as UserType
+    };
+    return sanitizedBody;
+}
 
 /**
  * Determines if a specified value exists within the provided enum object's values.
@@ -76,34 +102,35 @@ function isPhoneNumberValid(number: string): boolean {
     - Checks if the user is a service member and is missing the required branch value
     - Returns an appropriate response based on success / failure.
 */
-export function validateUserInput(body: CreateUserRequest) {
+export function validateUserInput(sanitizedBody: CreateUserRequest) {
     const requiredFields: (keyof CreateUserRequest)[] = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
     for (const field of requiredFields) {
-        if (!body[field]) {
+        if (!sanitizedBody[field]) {
             return { error: UserError.MISSING_FIELDS, status: 400 };
         }
+        
     }
 
-    if (!isEnumValue(UserType, body.userType) || !isEnumValue(Gender, body.gender)) {
+    if (!isEnumValue(UserType, sanitizedBody.userType) || !isEnumValue(Gender, sanitizedBody.gender)) {
         return { error: UserError.INVALID_TYPE, status: 400 };
     }
 
-    if (!isEmailValid(body.email) || !isPasswordValid(body.password) || !isPhoneNumberValid(body.phoneNumber)) {
+    if (!isEmailValid(sanitizedBody.email) || !isPasswordValid(sanitizedBody.password) || !isPhoneNumberValid(sanitizedBody.phoneNumber)) {
         return { error: UserError.VALIDATION_ERR, status: 400 };
     }
 
-    if (body.userType === UserType.VOLUNTEER) {
-        if (body.branch || body.addressLineOne || body.addressLineTwo || body.country || body.state) {
+    if (sanitizedBody.userType === UserType.VOLUNTEER) {
+        if (sanitizedBody.branch || sanitizedBody.addressLineOne || sanitizedBody.addressLineTwo || sanitizedBody.country || sanitizedBody.state) {
             return { error: UserError.VALIDATION_ERR, status: 400 };
         }
     }
 
-    if (body.userType === UserType.SERVICE_MEMBER) {
-        if (!body.branch) {
+    if (sanitizedBody.userType === UserType.SERVICE_MEMBER) {
+        if (!sanitizedBody.branch) {
             return { error: UserError.MISSING_FIELDS, status: 400 };
         }
 
-        if (!isEnumValue(Branch, body.branch)) {
+        if (!isEnumValue(Branch, sanitizedBody.branch)) {
             return { error: UserError.INVALID_TYPE, status: 400 };
         }
     }
@@ -141,12 +168,13 @@ export function validateUserInput(body: CreateUserRequest) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const validationError = validateUserInput(body);
+        const sanitizedBody = sanitizeBody(body);
+        const validationError = validateUserInput(sanitizedBody);
         if (validationError) {
             return NextResponse.json(validationError, { status: validationError.status });
         }
 
-        const { firstName, lastName, email, password, phoneNumber, userType, gender, addressLineOne, addressLineTwo, branch, country, state } = body;
+        const { firstName, lastName, email, password, phoneNumber, userType, gender, addressLineOne, addressLineTwo, branch, country, state } = sanitizedBody;
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
@@ -194,3 +222,4 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Registration failed" }, { status: 500 });
     }
 }
+

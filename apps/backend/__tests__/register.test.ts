@@ -1,6 +1,6 @@
-import { UserType } from "@prisma/client";
+import { UserType, Gender, Branch } from "@prisma/client";
 import { validateUserInput } from "../app/api/auth/register/route";
-import { UserError, Gender, Branch } from "../app/types/enums";
+import { UserError } from "../app/types/enums";
 
 const dummyPassword: string = "passwordTest123!";
 
@@ -12,7 +12,9 @@ describe("validateUserInput", () => {
             firstName: "",
             lastName: "",
             phoneNumber: "",
-            gender: Gender.FEMALE
+            gender: Gender.FEMALE,
+            zipCode: "",
+            userType: "" as unknown as UserType
         }; 
         expect(validateUserInput(body)).toEqual({ error: UserError.MISSING_FIELDS, status: 400 });
     });

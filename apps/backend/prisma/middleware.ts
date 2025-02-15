@@ -3,7 +3,8 @@ import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient()
 
-const HASH_ROUNDS = process.env.HASH_ROUNDS ? parseInt(process.env.HASH_ROUNDS) : 12;
+const parsedRounds = parseInt(process.env.HASH_ROUNDS || '', 10);
+const HASH_ROUNDS = (!Number.isNaN(parsedRounds) && parsedRounds > 0) ? parsedRounds : 12;
 
 prisma.$use(async (params, next) => {
     if (params.model === 'User' && (params.action === 'create' || params.action === 'update')) {
@@ -11,7 +12,8 @@ prisma.$use(async (params, next) => {
             try {
                 params.args.data.password = await bcrypt.hash(params.args.data.password, HASH_ROUNDS);
             } catch (error) {
-                throw new Error('Failed to process password');
+                if (error instanceof Error)
+                throw new Error(`Failed to process password: ${error.message}`);
             }
             
         }

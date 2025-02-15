@@ -1,9 +1,9 @@
-import { UserType } from "@prisma/client";
+import { UserType, Branch, Gender} from "@prisma/client";
 
 export enum UserError {
     INVALID_METHOD = "Invalid method",
     MISSING_FIELDS = "Missing fields",
-    USER_EXISTS = "User already exists",
+    USER_EXISTS = "Registration failed",
     USER_NONEXISTENT = "User does not exist",
     INTERNAL_ERR = "Internal server error",
     INVALID_CREDENTIALS = "Invalid credentials",
@@ -22,41 +22,28 @@ export enum Status {
     LOGOUT_SUCCESS = "User logged out successfully!"
 }
 
-export enum Gender {
-    MALE = "MALE",
-    FEMALE = "FEMALE"
-}
-
-export enum Branch {
-    ARMY = "ARMY",
-    NAVY = "NAVY",
-    AIR_FORCE = "AIR_FORCE",
-    SPACE_FORCE = "SPACE_FORCE",
-    COAST_GUARD = "COAST_GUARD",
-    NATIONAL_GUARD = "NATIONAL_GUARD",
-    MARINES = "MARINES",
-}
-
 export interface ServiceMember {
     userId: number;
     addressLineOne: string;
     addressLineTwo?: string;
     branch: Branch;
     country?: string;
-    state?: string
+    state?: string;
+    zipCode?: string;
 }
 
 export interface CreateUserRequest {
+    zipCode?: string;
     email: string;
     password: string;
     firstName: string;
     lastName: string;
     phoneNumber: string;
-    userType?: UserType;
+    userType: UserType;
     gender: Gender;
     branch?: Branch;
-    addressLineOne?: string;
-    addressLineTwo?: string;
-    country?: string;
-    state?: string;             //forgot zip code Q-Q
+    addressLineOne?: string | undefined;
+    addressLineTwo?: string | undefined;
+    country?: string | undefined;
+    state?: string | undefined;             //forgot zip code Q-Q
 }

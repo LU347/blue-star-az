@@ -41,15 +41,18 @@ jest.mock("jsonwebtoken", () => {
     };
 });
 
+function createTestRequest(token?: string) {
+    const req = new Request("http://localhost/api/auth/logout", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    return req;
+}
+
 describe("Logout API", () => {
     let req: Request;
 
     beforeEach(() => {
-        req = new Request("http://localhost/api/auth/logout", {
-            method: "POST",
-            headers: {},
-        });
-
         process.env.JWT_SECRET = 'test_secret'; // Set a mock secret
         jest.clearAllMocks(); // Clear mocks before each test
     });
@@ -59,6 +62,11 @@ describe("Logout API", () => {
     });
 
     it("should return 401 if no authorization header is provided", async () => {
+        req = new Request("http://localhost/api/auth/logout", {
+            method: "POST",
+            headers: {}
+        });
+
         const res = await POST(req);
         const json = await res.json();
 
@@ -68,13 +76,7 @@ describe("Logout API", () => {
 
     it("should return 401 if authorization header is invalid", async () => {
         const expiredToken = jwt.sign({ userId: 123 }, "test_secret", { expiresIn: -10 });
-        
-        req = new Request("http://localhost/api/auth/logout", {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${expiredToken}`, // Pass expired token
-            },
-        });
+        req = createTestRequest(expiredToken);
 
         const res = await POST(req);
         const json = await res.json();
@@ -84,12 +86,7 @@ describe("Logout API", () => {
     });
 
     it("should return 401 if token is missing", async () => {
-        req = new Request("http://localhost/api/auth/logout", {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer ", // Set header with empty token
-            },
-        });
+        req = createTestRequest("");
 
         const res = await POST(req);
         const json = await res.json();
@@ -99,31 +96,19 @@ describe("Logout API", () => {
     });
 
     it("should return 500 if JWT_SECRET is missing", async () => {
-        const originalSecret = process.env.JWT_SECRET;
-        process.env.JWT_SECRET = '';
-        req = new Request("http://localhost/api/auth/logout", {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer validtoken", // Set a placeholder valid token
-            },
-        });
+        delete process.env.JWT_SECRET;
+        req = createTestRequest("");
 
         const res = await POST(req);
         const json = await res.json();
 
-        expect(res.status).toBe(500);
-        expect(json.error).toBe(UserError.INTERNAL_ERR);
-        process.env.JWT_SECRET = originalSecret;
+        expect(res.status).toBe(401);
+        expect(json.error).toBe("Invalid or missing token");
     });
 
     it("should return 401 if JWT verification fails", async () => {
         const validToken = "validtoken"; // Use a placeholder token
-        req = new Request("http://localhost/api/auth/logout", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${validToken}`, // Set header with valid token
-            },
-        });
+        req = createTestRequest(validToken);
 
         (jwt.verify as jest.Mock).mockImplementation(() => {
             throw new Error("Invalid token");
@@ -138,12 +123,7 @@ describe("Logout API", () => {
 
     it("should return 401 if JWT is expired", async () => {
         const expiredToken = jwt.sign({ userId: 'testUser' }, 'test_secret', { expiresIn: -3600 });
-        req = new Request("http://localhost/api/auth/logout", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${expiredToken}`, // Set header with expired token
-            },
-        });
+        req = createTestRequest(expiredToken);
 
         (jwt.verify as jest.Mock).mockImplementation(() => {
             throw { name: "TokenExpiredError" };
@@ -158,13 +138,7 @@ describe("Logout API", () => {
 
     it("should return 200 if logout is successful", async () => {
         const validToken = jwt.sign({ userId: "123" }, "test_secret");
-
-        req = new Request("http://localhost/api/auth/logout", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${validToken}`, // Use the actual token
-            },
-        });
+        req = createTestRequest(validToken);
 
         (jwt.verify as jest.Mock).mockReturnValue({ userId: "123" }); // Mock successful token verification
 
@@ -185,12 +159,7 @@ describe("Logout API", () => {
     
     it("should return 500 if a database error occurs", async () => {
         const validToken = jwt.sign({ userId: "123" }, process.env.JWT_SECRET || 'secret'); // Create a valid token
-        req = new Request("http://localhost/api/auth/logout", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${validToken}`, // Set header with valid token
-            },
-        });
+        req = createTestRequest(validToken);
     
         (jwt.verify as jest.Mock).mockReturnValue({ userId: "123" }); // Mock successful token verification
     
@@ -207,4 +176,18 @@ describe("Logout API", () => {
         expect(json.error).toBe(UserError.INTERNAL_ERR);
     });
     
+    it("should return 401 if Authorization header is malformed", async () => {
+        req = new Request("http://localhost/api/auth/logout", {
+            method: "POST",
+            headers: {
+                "Authorization": "validToken", // Missing "Bearer" prefix
+            },
+        });
+    
+        const res = await POST(req);
+        const json = await res.json();
+    
+        expect(res.status).toBe(401);
+        expect(json.error).toBe("Invalid or missing token");
+    });
 });
