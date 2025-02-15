@@ -240,10 +240,10 @@ export async function POST(req: Request) {
             return newUser;
         });
 
-        if (result) {
-            return NextResponse.json({ message: Status.REGISTER_SUCCESS }, { status: 201 });
-        }
-        return NextResponse.json({ message: UserError.INTERNAL_ERR }, { status: 500 });
+        return NextResponse.json(
+            { status: 'success', message: Status.REGISTER_SUCCESS },
+            { status: 201 }
+        );
 
     } catch (error) {
         console.error("Registration error:", error);
