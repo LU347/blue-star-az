@@ -1,3 +1,5 @@
+import { UserType } from "@prisma/client";
+
 export enum UserError {
     INVALID_METHOD = "Invalid method",
     MISSING_FIELDS = "Missing fields",
@@ -42,4 +44,19 @@ export interface ServiceMember {
     branch: Branch;
     country?: string;
     state?: string
+}
+
+export interface CreateUserRequest {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    userType?: UserType;
+    gender: Gender;
+    branch?: Branch;
+    addressLineOne?: string;
+    addressLineTwo?: string;
+    country?: string;
+    state?: string;             //forgot zip code Q-Q
 }

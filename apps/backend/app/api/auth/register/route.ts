@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Gender, PrismaClient, UserType } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { UserError, Status, Branch} from "app/types/enums";
+import { UserError, Status, Branch, CreateUserRequest} from "app/types/enums";
 
 const prisma = new PrismaClient();
 
@@ -23,7 +23,7 @@ const prisma = new PrismaClient();
  *
  * const isValid = isEnumValue(UserRole, "ADMIN"); // returns true
  */
-function isEnumValue(enumObj: any, value: any): boolean {
+function isEnumValue<T extends { [key: string]: string | number}>(enumObj: any, value: any): boolean {
     return Object.values(enumObj).includes(value);
 }
 
@@ -67,6 +67,7 @@ function isPhoneNumberValid(number: string): boolean {
     const numberRegex: RegExp = /^\+?[1-9][0-9]{7,14}$/;
     return numberRegex.test(number);
 }
+
 /*
     Validates user input:
     - Checks if any of the required fields are missing
@@ -75,8 +76,8 @@ function isPhoneNumberValid(number: string): boolean {
     - Checks if the user is a service member and is missing the required branch value
     - Returns an appropriate response based on success / failure.
 */
-export function validateUserInput(body: any) {
-    const requiredFields = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
+export function validateUserInput(body: CreateUserRequest) {
+    const requiredFields: (keyof CreateUserRequest)[] = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
     for (const field of requiredFields) {
         if (!body[field]) {
             return { error: UserError.MISSING_FIELDS, status: 400 };
@@ -152,7 +153,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: UserError.USER_EXISTS }, { status: 400 });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const HASH_ROUNDS = process.env.HASH_ROUNDS ? parseInt(process.env.HASH_ROUNDS) : 12;
+        const hashedPassword = await bcrypt.hash(password, HASH_ROUNDS);
 
         const result = await prisma.$transaction(async (prisma) => {
             const newUser = await prisma.user.create({
@@ -189,6 +191,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: UserError.INTERNAL_ERR }, { status: 500 });
         
     } catch (error) {
-        return NextResponse.json({ error: UserError.INTERNAL_ERR }, { status: 500 });
+        return NextResponse.json({ error: "Registration failed" }, { status: 500 });
     }
 }

@@ -16,13 +16,7 @@ jest.mock("@prisma/client", () => {
                 create: mockCreate, // Ensure the transaction uses the same mock
             },
         });
-    }).mockImplementation(async (callback) => {
-        try {
-            return await callback(prisma);
-        } catch (error) {
-            throw error;
-        }
-    })
+    }).mockImplementation(async (callback) => callback(prisma));
 
     return {
         PrismaClient: jest.fn().mockImplementation(() => ({
