@@ -5,13 +5,15 @@ import { UserError, Status, CreateUserRequest} from "app/types/enums";
 import { sanitize } from "class-sanitizer";
 import { escape as escapeHtml } from "validator";
 
-declare global {
-    var prisma: PrismaClient | undefined;
-}
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-const prisma = global.prisma || new PrismaClient();
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: ['query'],
+  });
 
-if (process.env.NODE_ENV !== 'production') global.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 function sanitizeInput(input: string): string {
     return escapeHtml(input.trim());
