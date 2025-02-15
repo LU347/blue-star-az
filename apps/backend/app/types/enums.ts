@@ -33,7 +33,6 @@ export interface ServiceMember {
 }
 
 export interface CreateUserRequest {
-    zipCode?: string;
     email: string;
     password: string;
     firstName: string;
@@ -42,8 +41,9 @@ export interface CreateUserRequest {
     userType: UserType;
     gender: Gender;
     branch?: Branch;
-    addressLineOne?: string | undefined;
-    addressLineTwo?: string | undefined;
-    country?: string | undefined;
-    state?: string | undefined;             //forgot zip code Q-Q
+    addressLineOne?: string;
+    addressLineTwo?: string;
+    country?: string;
+    state?: string;     
+    zipCode?: string;        
 }

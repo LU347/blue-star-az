@@ -20,14 +20,25 @@ function sanitizeBody(body: CreateUserRequest) {
         lastName: sanitizeInput(body.lastName),
         phoneNumber: sanitizeInput(body.phoneNumber),
         gender: body.gender as Gender,
-        branch: body.branch as Branch,
-        addressLineOne: sanitizeInput(body.addressLineOne ?? ""),
-        addressLineTwo: sanitizeInput(body.addressLineTwo ?? ""),
-        country: sanitizeInput(body.country ?? ""),
-        state: sanitizeInput(body.state ?? ""),
-        zipCode: sanitizeInput(body.zipCode ?? ""),
-        userType: body.userType as UserType
+        userType: body.userType as UserType,
     };
+
+    if (body.addressLineOne) {
+        sanitizedBody.addressLineOne = sanitizeInput(body.addressLineOne) || "";
+    }
+    if (body.addressLineTwo) {
+        sanitizedBody.addressLineTwo = sanitizeInput(body.addressLineTwo) || "";
+    }
+    if (body.country) {
+        sanitizedBody.country = sanitizeInput(body.country) || "";
+    }
+    if (body.state) {
+        sanitizedBody.state = sanitizeInput(body.state) || ""; 
+    }
+    if (body.branch) {
+        sanitizedBody.branch = body.branch as Branch;
+    }
+
     return sanitizedBody;
 }
 
@@ -166,6 +177,7 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
  * }
  */
 export async function POST(req: Request) {
+    console.log("test");
     try {
         const body = await req.json();
         const sanitizedBody = sanitizeBody(body);
@@ -198,17 +210,20 @@ export async function POST(req: Request) {
             });
         
             if (userType === UserType.SERVICE_MEMBER) {
+                const serviceMemberData: any = {
+                    userId: newUser.id,
+                    ...(sanitizedBody.addressLineOne && { addressLineOne: sanitizedBody.addressLineOne }),
+                    ...(sanitizedBody.addressLineTwo && { addressLineTwo: sanitizedBody.addressLineTwo }),
+                    ...(sanitizedBody.branch && { branch: sanitizedBody.branch }),
+                    ...(sanitizedBody.country && { country: sanitizedBody.country }),
+                    ...(sanitizedBody.state && { state: sanitizedBody.state }),
+                };
+            
                 await prisma.serviceMember.create({
-                    data: {
-                        userId: newUser.id,
-                        addressLineOne,
-                        addressLineTwo,
-                        branch,
-                        country,
-                        state,
-                    },
+                    data: serviceMemberData,
                 });
             }
+            
         
             return newUser;
         });
