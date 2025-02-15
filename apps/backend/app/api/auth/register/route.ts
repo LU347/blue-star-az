@@ -5,6 +5,10 @@ import { UserError, Status, CreateUserRequest} from "app/types/enums";
 import { sanitize } from "class-sanitizer";
 import { escape as escapeHtml } from "validator";
 
+const EMAIL_REGEX: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_REGEX: RegExp = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
+const PHONE_NUM_REGEX: RegExp = /^\+?[1-9][0-9]{7,14}$/;
+
 declare global {
     var prisma: PrismaClient | undefined;
 }
@@ -84,8 +88,7 @@ function isEnumValue<T extends { [key: string]: string | number}>(enumObj: T, va
  *          (e.g., missing fields or invalid type) along with an HTTP status code (typically 400).
  */
 function isEmailValid(email: string): boolean {
-    const emailRegex: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return EMAIL_REGEX.test(email);
 }
 
 /*
@@ -97,8 +100,7 @@ function isEmailValid(email: string): boolean {
     - At least one special character (#?!@$%^&*-)
 */
 function isPasswordValid(password: string): boolean {
-    const passwordRegex: RegExp = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
-    return passwordRegex.test(password);
+    return PASSWORD_REGEX.test(password);
 }
 
 /*
@@ -107,8 +109,7 @@ function isPasswordValid(password: string): boolean {
     +xxxxxxxxxxx
 */
 function isPhoneNumberValid(number: string): boolean {
-    const numberRegex: RegExp = /^\+?[1-9][0-9]{7,14}$/;
-    return numberRegex.test(number);
+    return PHONE_NUM_REGEX.test(number);
 }
 
 /*
