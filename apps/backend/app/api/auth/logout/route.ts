@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { UserError, Status } from "app/types/enums";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
@@ -25,20 +25,13 @@ const prisma = new PrismaClient();
 export async function POST(req: Request) {
     try {
         const authHeader = req.headers.get("authorization");
+        const parts = authHeader?.split(" ") || [];
 
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return NextResponse.json({ error: "Missing token" }, { status: 401 });
-        }
+        if (parts.length !== 2 || parts[0] !== "Bearer" || !parts[1]) {
+            return NextResponse.json({ error: "Invalid or missing token" }, { status: 401 });
+        }       
 
-        const parts = authHeader.split(" ");
-        if (parts.length !== 2 || parts[0] !== "Bearer") {
-            return NextResponse.json({ error: "Invalid header" }, { status: 401 });
-        }
-
-        const token = authHeader.split(" ")[1];
-        if (!token) {
-            return NextResponse.json({ error: "Invalid header" }, { status: 401 });
-        }
+        const token = parts[1];
 
         const jwtSecret = process.env.JWT_SECRET;
         if (!jwtSecret) {
@@ -46,20 +39,33 @@ export async function POST(req: Request) {
         }
 
         try {
-            const decoded = jwt.verify(token, jwtSecret);
+            jwt.verify(token, jwtSecret);
         } catch (jwtError: any) {
             if (jwtError.name === "TokenExpiredError") {
                 return NextResponse.json({ error: UserError.TOKEN_EXPIRED }, { status: 401 });
+            } else if (jwtError.name === "jsonWebTokenError") {
+                return NextResponse.json({ error: UserError.INVALID_TOKEN }, { status: 401});
             }
-            return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+            return NextResponse.json({ error: UserError.INTERNAL_ERR }, { status: 500 });
         }
         
 
         return await prisma.$transaction(async (tx) => {
-            await tx.tokenBlacklist.create({ data: { token } });
+            try {
+                await tx.tokenBlacklist.create({
+                    data: { token },
+                    select: { id: true }
+                });
+            } catch (error) {
+                if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                    if (error.code === "P2002") {
+                        return NextResponse.json({ message: Status.LOGOUT_SUCCESS }, { status: 200 });
+                    }
+                }
+                throw error;
+            }
             return NextResponse.json({ message: Status.LOGOUT_SUCCESS }, { status: 200 });
         });
-
     } catch (error: any) {
         return NextResponse.json({ error: UserError.INTERNAL_ERR }, { status: 500 });
     }

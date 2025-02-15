@@ -11,7 +11,10 @@
         "name": "next"
       }
     ],
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
   },
   "include": [
     "**/*.ts",

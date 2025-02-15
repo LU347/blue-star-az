@@ -24,7 +24,7 @@ function createMockRequest(body: { email: string; password: string }) {
 
 describe("POST Login Endpoint", () => {
     beforeAll(() => {
-        process.env.JWT_SECRET = process.env.JWT_SECRET;
+        process.env.JWT_SECRET = "test-secret";
     })
 
     beforeEach(() => {
@@ -39,8 +39,10 @@ describe("POST Login Endpoint", () => {
         (prisma.user.findUnique as jest.Mock).mockResolvedValue({
             id: 1,
             email: "lucile.smith@example.com",
-            password: await bcrypt.hash("password", 10), // Correct hashed password
+            password: await bcrypt.hash("password", 12), // Correct hashed password
         });
+
+        expect(bcrypt.hash).toHaveBeenCalledWith("password", 12);
 
         // Mocking bcrypt to simulate password comparison failure
         (bcrypt.compare as jest.Mock).mockResolvedValue(false); // Simulate incorrect password

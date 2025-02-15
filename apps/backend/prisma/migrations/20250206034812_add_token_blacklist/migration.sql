@@ -9,3 +9,6 @@ CREATE TABLE "TokenBlacklist" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "TokenBlacklist_token_key" ON "TokenBlacklist"("token");
+
+-- CreateIndex
+CREATE INDEX "TokenBlacklist_createdAt_idx" ON "TokenBlacklist"("createdAt");

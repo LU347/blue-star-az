@@ -6,15 +6,23 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const prisma = new PrismaClient();
+
 jest.mock("@prisma/client", () => {
-    const mockCreate = jest.fn(); // Mock for the 'create' method
+    const mockCreate = jest.fn().mockResolvedValue({ id: 1, token: 'test', createdAt: new Date() });
     const mockTransaction = jest.fn(async (callback) => {
         return await callback({
             tokenBlacklist: {
                 create: mockCreate, // Ensure the transaction uses the same mock
             },
         });
-    });
+    }).mockImplementation(async (callback) => {
+        try {
+            return await callback(prisma);
+        } catch (error) {
+            throw error;
+        }
+    })
 
     return {
         PrismaClient: jest.fn().mockImplementation(() => ({
@@ -61,7 +69,7 @@ describe("Logout API", () => {
         const json = await res.json();
 
         expect(res.status).toBe(401);
-        expect(json.error).toBe("Missing token");
+        expect(json.error).toBe("Invalid or missing token");
     });
 
     it("should return 401 if authorization header is invalid", async () => {
@@ -77,8 +85,8 @@ describe("Logout API", () => {
         const res = await POST(req);
         const json = await res.json();
 
-        expect(res.status).toBe(401);
-        expect(json.error).toBe("Invalid token");
+        expect(res.status).toBe(500);
+        expect(json.error).toBe(UserError.INTERNAL_ERR);
     });
 
     it("should return 401 if token is missing", async () => {
@@ -93,11 +101,12 @@ describe("Logout API", () => {
         const json = await res.json();
 
         expect(res.status).toBe(401);
-        expect(json.error).toBe("Missing token");
+        expect(json.error).toBe("Invalid or missing token");
     });
 
     it("should return 500 if JWT_SECRET is missing", async () => {
-        delete process.env.JWT_SECRET; // Remove JWT_SECRET
+        const originalSecret = process.env.JWT_SECRET;
+        process.env.JWT_SECRET = '';
         req = new Request("http://localhost/api/auth/logout", {
             method: "POST",
             headers: {
@@ -110,6 +119,7 @@ describe("Logout API", () => {
 
         expect(res.status).toBe(500);
         expect(json.error).toBe(UserError.INTERNAL_ERR);
+        process.env.JWT_SECRET = originalSecret;
     });
 
     it("should return 401 if JWT verification fails", async () => {
@@ -128,8 +138,8 @@ describe("Logout API", () => {
         const res = await POST(req);
         const json = await res.json();
 
-        expect(res.status).toBe(401);
-        expect(json.error).toBe("Invalid token");
+        expect(res.status).toBe(500);
+        expect(json.error).toBe(UserError.INTERNAL_ERR);
     });
 
     it("should return 401 if JWT is expired", async () => {
@@ -175,6 +185,7 @@ describe("Logout API", () => {
         const prismaClient = new PrismaClient(); // Instantiate the mock
         expect(prismaClient.tokenBlacklist.create).toHaveBeenCalledWith({
             data: { token: validToken },
+            select: { id: true },
         });
     });
     

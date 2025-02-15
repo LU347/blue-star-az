@@ -20,11 +20,6 @@ export enum Status {
     LOGOUT_SUCCESS = "User logged out successfully!"
 }
 
-export enum UserTypes {
-    SERVICE_MEMBER = "SERVICE_MEMBER",
-    VOLUNTEER = "VOLUNTEER",
-}
-
 export enum Gender {
     MALE = "MALE",
     FEMALE = "FEMALE"

@@ -40,6 +40,41 @@ function isEnumValue(enumObj: any, value: any): boolean {
  * @returns Null if the validation passes; otherwise, an object with an `error` property indicating the type of error
  *          (e.g., missing fields or invalid type) along with an HTTP status code (typically 400).
  */
+function isEmailValid(email: string): boolean {
+    const emailRegex: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+/*
+    Password format:
+    - Must have minimum 8 characters
+    - At least one uppercase English letter (A-Z)
+    - At least one lowercase English letter (a-z)
+    - At least one digit (0-9)
+    - At least one special character (#?!@$%^&*-)
+*/
+function isPasswordValid(password: string): boolean {
+    const passwordRegex: RegExp = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
+    return passwordRegex.test(password);
+}
+
+/*
+    Number format:
+    Basic international phone number validation without delimiters and optional plus sign
+    +xxxxxxxxxxx
+*/
+function isPhoneNumberValid(number: string): boolean {
+    const numberRegex: RegExp = /^\+?[1-9][0-9]{7,14}$/;
+    return numberRegex.test(number);
+}
+/*
+    Validates user input:
+    - Checks if any of the required fields are missing
+    - Checks if the proper enum values are used
+    - Checks if the user is a volunteer and doesn't contain any serviceMember fields
+    - Checks if the user is a service member and is missing the required branch value
+    - Returns an appropriate response based on success / failure.
+*/
 export function validateUserInput(body: any) {
     const requiredFields = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
     for (const field of requiredFields) {
@@ -48,16 +83,18 @@ export function validateUserInput(body: any) {
         }
     }
 
-    if (!isEnumValue(UserType, body.userType)) {
+    if (!isEnumValue(UserType, body.userType) || !isEnumValue(Gender, body.gender)) {
         return { error: UserError.INVALID_TYPE, status: 400 };
     }
 
-    if (!isEnumValue(Gender, body.gender)) {
-        return { error: UserError.INVALID_TYPE, status: 400 };
-    }
-
-    if (body.userType === UserType.VOLUNTEER && (body.branch || body.addressLineOne || body.addressLineTwo || body.country || body.state)) {
+    if (!isEmailValid(body.email) || !isPasswordValid(body.password) || !isPhoneNumberValid(body.phoneNumber)) {
         return { error: UserError.VALIDATION_ERR, status: 400 };
+    }
+
+    if (body.userType === UserType.VOLUNTEER) {
+        if (body.branch || body.addressLineOne || body.addressLineTwo || body.country || body.state) {
+            return { error: UserError.VALIDATION_ERR, status: 400 };
+        }
     }
 
     if (body.userType === UserType.SERVICE_MEMBER) {
@@ -117,34 +154,41 @@ export async function POST(req: Request) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newUser = await prisma.user.create({
-            data: {
-                firstName,
-                lastName,
-                email,
-                password: hashedPassword,
-                phoneNumber,
-                userType,
-                gender
-            },
-        });
-
-        if (userType === UserType.SERVICE_MEMBER) {
-            await prisma.serviceMember.create({
+        const result = await prisma.$transaction(async (prisma) => {
+            const newUser = await prisma.user.create({
                 data: {
-                    userId: newUser.id,
-                    addressLineOne,
-                    addressLineTwo,
-                    branch,
-                    country,
-                    state,
+                    firstName,
+                    lastName,
+                    email,
+                    password: hashedPassword,
+                    phoneNumber,
+                    userType,
+                    gender
                 },
             });
-        }
+        
+            if (userType === UserType.SERVICE_MEMBER) {
+                await prisma.serviceMember.create({
+                    data: {
+                        userId: newUser.id,
+                        addressLineOne,
+                        addressLineTwo,
+                        branch,
+                        country,
+                        state,
+                    },
+                });
+            }
+        
+            return newUser;
+        });
 
-        return NextResponse.json({ message: Status.REGISTER_SUCCESS }, { status: 201 });
+        if (result) {
+            return NextResponse.json({ message: Status.REGISTER_SUCCESS }, { status: 201 });
+        }
+        return NextResponse.json({ message: UserError.INTERNAL_ERR }, { status: 500 });
+        
     } catch (error) {
-        console.error("Registration error:", error);
         return NextResponse.json({ error: UserError.INTERNAL_ERR }, { status: 500 });
     }
 }

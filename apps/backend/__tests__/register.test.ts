@@ -1,5 +1,7 @@
 import { validateUserInput } from "../app/api/auth/register/route";
-import { UserError, UserTypes, Gender, Branch } from "../app/types/enums";
+import { UserError, Gender, Branch } from "../app/types/enums";
+
+const dummyPassword: string = "passwordTest123!";
 
 describe("validateUserInput", () => {
     it("should return an error if required fields are missing", () => {
@@ -10,7 +12,7 @@ describe("validateUserInput", () => {
     it("should return an error for invalid userType", () => {
         const body = {
             email: "test@example.com",
-            password: "password123",
+            password: dummyPassword,
             firstName: "John",
             lastName: "Doe",
             phoneNumber: "1234567890",
@@ -23,12 +25,12 @@ describe("validateUserInput", () => {
     it("should return an error if gender is invalid", () => {
         const body = {
             email: "test@example.com",
-            password: "password123",
+            password: dummyPassword,
             firstName: "John",
             lastName: "Doe",
             phoneNumber: "1234567890",
             gender: "INVALID_GENDER",
-            userType: UserTypes.VOLUNTEER,
+            userType: "VOLUNTEER",
         };
         expect(validateUserInput(body)).toEqual({ error: UserError.INVALID_TYPE, status: 400 });
     });
@@ -36,12 +38,12 @@ describe("validateUserInput", () => {
     it("should return an error if volunteer provides serviceMember fields", () => {
         const body = {
             email: "test@example.com",
-            password: "password123",
+            password: dummyPassword,
             firstName: "John",
             lastName: "Doe",
             phoneNumber: "1234567890",
             gender: Gender.MALE,
-            userType: UserTypes.VOLUNTEER,
+            userType: "VOLUNTEER",
             branch: Branch.ARMY, // Should not be provided by a volunteer,
         };
         expect(validateUserInput(body)).toEqual({ error: UserError.VALIDATION_ERR, status: 400 });
@@ -50,7 +52,7 @@ describe("validateUserInput", () => {
     it("should return an error if service member is missing branch", () => {
         const body = {
             email: "test@example.com",
-            password: "password123",
+            password: dummyPassword,
             firstName: "John",
             lastName: "Doe",
             phoneNumber: "1234567890",
@@ -64,12 +66,12 @@ describe("validateUserInput", () => {
     it("should return null for valid input", () => {
         const body = {
             email: "test@example.com",
-            password: "password123",
+            password: dummyPassword,
             firstName: "John",
             lastName: "Doe",
             phoneNumber: "1234567890",
             gender: Gender.MALE,
-            userType: UserTypes.VOLUNTEER,
+            userType: "VOLUNTEER",
         };
         expect(validateUserInput(body)).toBeNull();
     });

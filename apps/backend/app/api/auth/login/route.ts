@@ -24,9 +24,9 @@ interface LoginRequestBody {
 export function validateUserInput(body: any) {
     const requiredFields: (keyof LoginRequestBody)[] = ['email', 'password'];
     for (const field of requiredFields) {
-        if (!body[field]) {
+        if (!body[field] || body[field].length === 0) {                 //Checks if the field is missing or if the field is  empty
             return { error: UserError.MISSING_FIELDS, status: 400 };
-        }
+        } 
     }
     return null;
 }
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
 
         const tokenSecret = process.env.JWT_SECRET;
         if (!tokenSecret) {
-            throw new Error("JWT_SECRET is not defined in environment variables.");
+            throw new Error("JWT_SECRET is not defined in environment variables."); //Generate a key using ```openssl rand -base64 60``` and place it in your .env file
 }
         const token = jwt.sign(
             { userId: user.id, userType: user.userType },
