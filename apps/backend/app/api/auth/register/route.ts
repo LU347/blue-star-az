@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { Gender, PrismaClient, UserType, Branch} from "@prisma/client";
+import { Gender, PrismaClient, UserType, Branch } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { UserError, Status, CreateUserRequest} from "app/types/enums";
+import { UserError, Status, CreateUserRequest } from "app/types/enums";
 import { sanitize } from "class-sanitizer";
 import { escape as escapeHtml } from "validator";
 
@@ -12,13 +12,18 @@ const PHONE_NUM_REGEX: RegExp = /^\+?[1-9][0-9]{7,14}$/;
 declare global {
     var prisma: PrismaClient | undefined;
 }
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-const prisma = global.prisma || new PrismaClient();
+export const prisma =
+    globalForPrisma.prisma ||
+    new PrismaClient({
+        log: ['query'],
+    });
 
-if (process.env.NODE_ENV !== 'production') global.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 function sanitizeInput(input: string): string {
-    return escape(input.trim());
+    return escapeHtml(input.trim());
 }
 
 function sanitizeBody(body: CreateUserRequest) {
@@ -43,7 +48,7 @@ function sanitizeBody(body: CreateUserRequest) {
         sanitizedBody.country = sanitizeInput(body.country) || "";
     }
     if (body.state) {
-        sanitizedBody.state = sanitizeInput(body.state) || ""; 
+        sanitizedBody.state = sanitizeInput(body.state) || "";
     }
     if (body.branch) {
         sanitizedBody.branch = body.branch as Branch;
@@ -70,7 +75,7 @@ function sanitizeBody(body: CreateUserRequest) {
  *
  * const isValid = isEnumValue(UserRole, "ADMIN"); // returns true
  */
-function isEnumValue<T extends { [key: string]: string | number}>(enumObj: T, value: T[keyof T]): boolean {
+function isEnumValue<T extends { [key: string]: string | number }>(enumObj: T, value: T[keyof T]): boolean {
     return Object.values(enumObj).includes(value);
 }
 
@@ -126,7 +131,7 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
         if (!sanitizedBody[field]) {
             return { error: UserError.MISSING_FIELDS, status: 400 };
         }
-        
+
     }
 
     if (!isEnumValue(UserType, sanitizedBody.userType) || !isEnumValue(Gender, sanitizedBody.gender)) {
@@ -214,7 +219,7 @@ export async function POST(req: Request) {
                     gender
                 },
             });
-        
+
             if (userType === UserType.SERVICE_MEMBER) {
                 const serviceMemberData: any = {
                     userId: newUser.id,
@@ -224,13 +229,13 @@ export async function POST(req: Request) {
                     ...(sanitizedBody.country && { country: sanitizedBody.country }),
                     ...(sanitizedBody.state && { state: sanitizedBody.state }),
                 };
-            
+
                 await prisma.serviceMember.create({
                     data: serviceMemberData,
                 });
             }
-            
-        
+
+
             return newUser;
         });
 
@@ -238,7 +243,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: Status.REGISTER_SUCCESS }, { status: 201 });
         }
         return NextResponse.json({ message: UserError.INTERNAL_ERR }, { status: 500 });
-        
+
     } catch (error) {
         return NextResponse.json({ error: "Registration failed" }, { status: 500 });
     }
