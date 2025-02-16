@@ -10,18 +10,15 @@ const EMAIL_REGEX: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_REGEX: RegExp = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
 const PHONE_NUM_REGEX: RegExp = /^\+?[1-9][0-9]{7,14}$/;
 
-declare global {
-    var prisma: PrismaClient | undefined;
+const prismaGlobal = global as typeof global & {
+    prisma?: PrismaClient
 }
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-export const prisma =
-    globalForPrisma.prisma ||
-    new PrismaClient({
-        log: process.env.NODE_ENV === 'development' ? ['query'] : [],
-    });
+export const prisma = prismaGlobal.prisma ?? new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["query"] : [],
+});
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== "production") prismaGlobal.prisma = prisma
 
 function sanitizeInput(input: string): string {
     return escapeHtml(input.trim());
@@ -130,13 +127,20 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
     const requiredFields: (keyof CreateUserRequest)[] = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
     for (const field of requiredFields) {
         if (!sanitizedBody[field]) {
-            return { error: UserError.MISSING_FIELDS, status: 400 };
+            return {
+                error: UserError.MISSING_FIELDS,
+                message: `Missing required field: ${field}`,
+                status: 400
+            };
         }
-
     }
 
     if (!isEnumValue(UserType, sanitizedBody.userType) || !isEnumValue(Gender, sanitizedBody.gender)) {
-        return { error: UserError.INVALID_TYPE, status: 400 };
+        return {
+            error: UserError.INVALID_TYPE,
+            message: `Invalid ${!isEnumValue(UserType, sanitizedBody.userType) ? 'user type' : 'gender'}`,
+            status: 400
+        };
     }
 
     if (!isEmailValid(sanitizedBody.email) || !isPasswordValid(sanitizedBody.password) || !isPhoneNumberValid(sanitizedBody.phoneNumber)) {

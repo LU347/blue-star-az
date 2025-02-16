@@ -16,7 +16,11 @@ describe("validateUserInput", () => {
             zipCode: "",
             userType: "" as unknown as UserType
         }; 
-        expect(validateUserInput(body)).toEqual({ error: UserError.MISSING_FIELDS, status: 400 });
+        expect(validateUserInput(body)).toEqual({ 
+            error: UserError.MISSING_FIELDS, 
+            message: `Missing required field: password`,
+            status: 400 
+        });
     });
 
     it("should return an error for invalid userType", () => {
@@ -29,7 +33,10 @@ describe("validateUserInput", () => {
             gender: Gender.MALE,
             userType: "TEST" as unknown as UserType,
         };
-        expect(validateUserInput(body)).toEqual({ error: UserError.INVALID_TYPE, status: 400 });
+        expect(validateUserInput(body)).toEqual({ 
+            error: UserError.INVALID_TYPE, 
+            message: "Invalid user type",
+            status: 400 });
     });
 
     it("should return an error if gender is invalid", () => {
@@ -42,7 +49,10 @@ describe("validateUserInput", () => {
             gender: "TEST" as unknown as Gender,
             userType: UserType.VOLUNTEER,
         };
-        expect(validateUserInput(body)).toEqual({ error: UserError.INVALID_TYPE, status: 400 });
+        expect(validateUserInput(body)).toEqual({ 
+            error: UserError.INVALID_TYPE, 
+            message: "Invalid gender",
+            status: 400 });
     });
 
     it("should return an error if volunteer provides serviceMember fields", () => {
