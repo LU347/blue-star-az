@@ -27,13 +27,16 @@ function sanitizeInput(input: string): string {
 function sanitizeBody(body: CreateUserRequest) {
     const sanitizedBody = {
         ...body,
-        email: sanitizeInput(body.email)?.toLowerCase() || "",
+        email: body.email ? sanitizeInput(body.email).toLowerCase() : 
+            throw new Error("Email is required"),
         password: sanitizeInput(body.password),
         firstName: sanitizeInput(body.firstName),
         lastName: sanitizeInput(body.lastName),
         phoneNumber: sanitizeInput(body.phoneNumber),
-        gender: body.gender as Gender,
-        userType: body.userType as UserType,
+        gender: isEnumValue(Gender, body.gender) ? body.gender : 
+            throw new Error("Invalid gender"),
+        userType: isEnumValue(UserType, body.userType) ? body.userType :
+            throw new Error("Invalid user type"),
     };
 
     if (body.addressLineOne) {
