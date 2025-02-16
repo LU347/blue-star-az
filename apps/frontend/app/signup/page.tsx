@@ -83,6 +83,7 @@ const Signup: React.FC = () => {
                 { value: "army", label: "Army" },
                 { value: "coast_guard", label: "Coast Guard"},
                 { value: "marines", label: "Marines" },
+                { value: "national_guard", label: "National Guard" },
                 { value: "navy", label: "Navy" },
                 { value: "space_force", label: "Space Force" }
             ],

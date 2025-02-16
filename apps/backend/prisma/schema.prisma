@@ -35,10 +35,10 @@ enum Branch {
 
 model User {
   id          Int      @id @default(autoincrement())
-  email       String   @unique
-  password    String
   firstName   String   @map("first_name")
   lastName    String   @map("last_name")
+  email       String   @unique
+  password    String
   phoneNumber String?  @map("phone_number")
   userType    UserType
   gender      Gender
@@ -51,13 +51,13 @@ model User {
 }
 
 model ServiceMember {
-  userId       Int     @id
-  addressLine1 String
-  addressLine2 String?
-  branch       Branch
-  country      String?
-  state        String?
-  user         User    @relation("UserServiceMember", fields: [userId], references: [id], onDelete: Cascade)
+  userId         Int     @id
+  addressLineOne String
+  addressLineTwo String?
+  branch         Branch
+  country        String?
+  state          String?
+  user           User    @relation("UserServiceMember", fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -69,4 +69,10 @@ model Volunteer {
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model TokenBlacklist {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  createdAt DateTime @default(now())
 }
