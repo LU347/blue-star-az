@@ -213,35 +213,38 @@ export async function POST(req: Request) {
         const hashedPassword = await bcrypt.hash(password, HASH_ROUNDS);
 
         const result = await prisma.$transaction(async (prisma) => {
-            const newUser = await prisma.user.create({
-                data: {
-                    firstName,
-                    lastName,
-                    email,
-                    password: hashedPassword,
-                    phoneNumber,
-                    userType,
-                    gender
-                },
-            });
-
-            if (userType === UserType.SERVICE_MEMBER) {
-                const serviceMemberData: any = {
-                    userId: newUser.id,
-                    ...(sanitizedBody.addressLineOne && { addressLineOne: sanitizedBody.addressLineOne }),
-                    ...(sanitizedBody.addressLineTwo && { addressLineTwo: sanitizedBody.addressLineTwo }),
-                    ...(sanitizedBody.branch && { branch: sanitizedBody.branch }),
-                    ...(sanitizedBody.country && { country: sanitizedBody.country }),
-                    ...(sanitizedBody.state && { state: sanitizedBody.state }),
-                };
-
-                await prisma.serviceMember.create({
-                    data: serviceMemberData,
+            try {
+                const newUser = await prisma.user.create({
+                    data: {
+                        firstName,
+                        lastName,
+                        email,
+                        password: hashedPassword,
+                        phoneNumber,
+                        userType,
+                        gender
+                    },
                 });
+
+                if (userType === UserType.SERVICE_MEMBER) {
+                    const serviceMemberData: any = {
+                        userId: newUser.id,
+                        ...(sanitizedBody.addressLineOne && { addressLineOne: sanitizedBody.addressLineOne }),
+                        ...(sanitizedBody.addressLineTwo && { addressLineTwo: sanitizedBody.addressLineTwo }),
+                        ...(sanitizedBody.branch && { branch: sanitizedBody.branch }),
+                        ...(sanitizedBody.country && { country: sanitizedBody.country }),
+                        ...(sanitizedBody.state && { state: sanitizedBody.state }),
+                    };
+
+                    await prisma.serviceMember.create({
+                        data: serviceMemberData,
+                    });
+                }
+
+                return newUser;
+            } catch (error) {
+                throw new Error(`Transaction failed: ${error.message}`);
             }
-
-
-            return newUser;
         });
 
         return NextResponse.json(
