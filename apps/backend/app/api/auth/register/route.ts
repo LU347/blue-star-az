@@ -243,7 +243,9 @@ export async function POST(req: Request) {
 
                 return newUser;
             } catch (error) {
-                throw new Error(`Transaction failed: ${error.message}`);
+                if (error instanceof Error) {
+                    throw new Error(`Transaction failed: ${error.message}`);
+                }
             }
         });
 
