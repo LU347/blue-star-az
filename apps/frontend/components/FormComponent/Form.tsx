@@ -20,6 +20,9 @@ interface FormComponentProps {
     linkText: string;
     linkHref: string;
     ariaLabel: string;
+    formData: Record<string, string>;
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    onSubmit: (e: React.FormEvent) => void;
 }
 
 const FormComponent: React.FC<FormComponentProps> = ({
@@ -31,11 +34,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
     linkText,
     linkHref,
     ariaLabel,
+    formData,
+    onChange,
+    onSubmit,
 }) => {
     return (
         <div className={styles.formPage}>
             <h1 className="text-3xl font-semibold mb-6">{title}</h1>
-            <form action={action} name={formName} className={styles.form} aria-label={ariaLabel}>
+            <form action={action} name={formName} className={styles.form} aria-label={ariaLabel} onSubmit={onSubmit}>
                 {fields.map((field, index) => (
                     <div key={index} className={styles.formField}>
                         <label htmlFor={field.name}>
@@ -62,6 +68,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     type={field.type}
                                     placeholder={field.placeholder}
                                     aria-labelledby={field.ariaLabel}
+                                    value={formData[field.name] || ""}
+                                    onChange={onChange}
+                                    required={field.required}
                                 />
                             )
                         }
