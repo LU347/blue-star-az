@@ -1,22 +1,43 @@
 import { NextResponse } from "next/server";
 
-const API_URL = "";
+const API_URL = "http://localhost:3001/api/auth/register"; // temp 
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
         const {
-            email, password, phoneNumber, first_name, last_name, 
-            gender, military_branch, address_one, address_two,
-            city, zip_code, country, state
+            email, password, phoneNumber, firstName, lastName, 
+            gender, branch, addressLineOne, addressLineTwo,
+            city, zipCode, country, state, confirmPassword
         } = body;
+
+        if (password !== confirmPassword) {
+            return NextResponse.json({ message: "Passwords do not match" }, { status: 400 });
+        }
+
+        const dataToSend = {
+            email,
+            password,
+            phoneNumber,
+            firstName,
+            lastName,
+            gender,
+            branch,
+            addressLineOne,
+            addressLineTwo,
+            city,
+            zipCode,
+            country,
+            state,
+            userType: "SERVICE_MEMBER", 
+        };
 
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(body),
+            body: JSON.stringify(dataToSend),
         });
 
         const data = await response.json();
@@ -27,6 +48,6 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ message: "Signup successful", user: data }, { status: 200 });
     } catch (error) {
-        return NextResponse.json({ message: "Internal Server Error " }, { status: 500 });
+        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
     }
 }

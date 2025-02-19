@@ -9,8 +9,8 @@ const Signup: React.FC = () => {
         email: "",
         password: "",
         phoneNumber: "",
-        first_name: "",
-        last_name: "",
+        firstName: "",
+        lastName: "",
         gender: "",
         military_branch: "",
         address_one: "",
@@ -78,7 +78,6 @@ const Signup: React.FC = () => {
                 onSubmit={handleSubmit}
                 onChange={handleChange}
                 formData={formData}
-
             />
         </div>
     );

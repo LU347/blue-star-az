@@ -42,7 +42,7 @@ export const signupFields = [
 
     },
     {
-        name: "first_name",
+        name: "firstName",
         label: "First Name",
         type: "text",
         placeholder: "First Name",
@@ -50,7 +50,7 @@ export const signupFields = [
         required: true,
     }, 
     {
-        name: "last_name",
+        name: "lastName",
         label: "Last Name",
         type: "text",
         placeholder: "Last Name",
@@ -64,37 +64,37 @@ export const signupFields = [
         placeholder: "Select Gender",
         ariaLabel: "gender_label",
         options: [
-            { value: "male", label: "Male" },
-            { value: "female", label: "Female" },
+            { value: "MALE", label: "Male" },
+            { value: "FEMALE", label: "Female" },
         ],
         required: true,
     },
     {
-        name: "military_branch",
+        name: "branch",
         label: "Branch",
         type: "select",
         placeholder: "Select Military Branch",
         ariaLabel: "military_branch_label",
         options: [
-            { value: "air_force", label: "Air Force" },
-            { value: "army", label: "Army" },
-            { value: "coast_guard", label: "Coast Guard"},
-            { value: "marines", label: "Marines" },
-            { value: "national_guard", label: "National Guard" },
-            { value: "navy", label: "Navy" },
-            { value: "space_force", label: "Space Force" }
+            { value: "AIR_FORCE", label: "Air Force" },
+            { value: "ARMY", label: "Army" },
+            { value: "COAST_GUARD", label: "Coast Guard"},
+            { value: "MARINES", label: "Marines" },
+            { value: "NATIONAL_GUARD", label: "National Guard" },
+            { value: "NAVY", label: "Navy" },
+            { value: "SPACE_FORCE", label: "Space Force" }
         ],
         required: true,
     },
     {
-        name: "address_one",
+        name: "addressLineOne",
         label: "Address Line 1",
         type: "text",
         placeholder: "USS Nimitz (CVN 68) / PSC 1234 / Unit 7400",
         ariaLabel: "address_one_label",
     },
     {
-        name: "address_two",
+        name: "addressLineTwo",
         label: "Address Line 2",
         type: "text",
         placeholder: "DPO, AE, 09498-0048 / APO AE 09204-1234",
@@ -108,7 +108,7 @@ export const signupFields = [
         ariaLabel: "city_label",
     },
     {
-        name: "zip_code",
+        name: "zipCode",
         label: "Zip Code",
         type: "text",
         placeholder: "Zip Code",
