@@ -18,7 +18,8 @@ const Signup: React.FC = () => {
         city: "",
         zip_code: "",
         country: "",
-        state: ""
+        state: "",
+        branch: "",
     });
 
     const [loading, setLoading] = useState(false);

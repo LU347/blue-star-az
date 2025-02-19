@@ -54,6 +54,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     name={field.name}
                                     aria-labelledby={field.ariaLabel}
                                     defaultValue=""
+                                    onChange={onChange}
                                 >
                                     <option value="">{field.placeholder}</option>
                                     {

@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { Gender, PrismaClient, UserType, Branch } from "@prisma/client";
+import { Prisma, Gender, PrismaClient, UserType, Branch } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { UserError, Status, CreateUserRequest } from "app/types/enums";
-import { sanitize } from "class-sanitizer";
 import { escape as escapeHtml } from "validator";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 const EMAIL_REGEX: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_REGEX: RegExp = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
@@ -21,10 +19,14 @@ export const prisma = prismaGlobal.prisma ?? new PrismaClient({
 if (process.env.NODE_ENV !== "production") prismaGlobal.prisma = prisma
 
 function sanitizeInput(input: string): string {
-    return escapeHtml(input.trim());
+    if (input) {
+        return escapeHtml(input.trim());
+    }
+    return "";
 }
 
 function sanitizeBody(body: CreateUserRequest) {
+    console.log("body:", body);
     const sanitizedBody = {
         ...body,
         email: sanitizeInput(body.email)?.toLowerCase() || "",
@@ -34,6 +36,7 @@ function sanitizeBody(body: CreateUserRequest) {
         phoneNumber: sanitizeInput(body.phoneNumber),
         gender: body.gender as Gender,
         userType: body.userType as UserType,
+        branch: body.branch as Branch,
     };
 
     if (body.addressLineOne) {
@@ -48,9 +51,8 @@ function sanitizeBody(body: CreateUserRequest) {
     if (body.state) {
         sanitizedBody.state = sanitizeInput(body.state) || "";
     }
-    if (body.branch) {
-        sanitizedBody.branch = body.branch as Branch;
-    }
+
+    console.log("sanitized:", sanitizedBody);
 
     return sanitizedBody;
 }
@@ -143,23 +145,31 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
         };
     }
 
-    if (!isEmailValid(sanitizedBody.email) || !isPasswordValid(sanitizedBody.password) || !isPhoneNumberValid(sanitizedBody.phoneNumber)) {
-        return { error: UserError.VALIDATION_ERR, status: 400 };
+    if (!isEmailValid(sanitizedBody.email)) {
+        return { error: UserError.VALIDATION_ERR, message: "Invalid email format", status: 400 };
+    }
+
+    if (!isPasswordValid(sanitizedBody.password)) {
+        return { error: UserError.VALIDATION_ERR, message: "Invalid password format", status: 400 };
+    }
+
+    if (!isPhoneNumberValid(sanitizedBody.phoneNumber)) {
+        return { error: UserError.VALIDATION_ERR, message: "Invalid phone number format", status: 400 };
     }
 
     if (sanitizedBody.userType === UserType.VOLUNTEER) {
         if (sanitizedBody.branch || sanitizedBody.addressLineOne || sanitizedBody.addressLineTwo || sanitizedBody.country || sanitizedBody.state) {
-            return { error: UserError.VALIDATION_ERR, status: 400 };
+            return { error: UserError.VALIDATION_ERR, message: "Volunteer user should not have service member fields", status: 400 };
         }
     }
 
     if (sanitizedBody.userType === UserType.SERVICE_MEMBER) {
         if (!sanitizedBody.branch) {
-            return { error: UserError.MISSING_FIELDS, status: 400 };
+            return { error: UserError.MISSING_FIELDS, message: "Missing branch for service member", status: 400 };
         }
 
         if (!isEnumValue(Branch, sanitizedBody.branch)) {
-            return { error: UserError.INVALID_TYPE, status: 400 };
+            return { error: UserError.INVALID_TYPE, message: "Invalid branch type", status: 400 };
         }
     }
 
@@ -196,16 +206,19 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
+
         const sanitizedBody = sanitizeBody(body);
+
         const validationError = validateUserInput(sanitizedBody);
         if (validationError) {
-            return NextResponse.json(validationError, { status: validationError.status });
+            return NextResponse.json({ error: validationError.message || "Validation error" }, { status: validationError.status || 400 });
         }
 
-        const { firstName, lastName, email, password, phoneNumber, userType, gender, addressLineOne, addressLineTwo, branch, country, state } = sanitizedBody;
+        const { firstName, lastName, email, password, phoneNumber, userType, gender, addressLineOne, addressLineTwo, branch, country, state, zipCode } = sanitizedBody;
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
+            console.log("User already exists:", existingUser); // Log if user already exists
             return NextResponse.json({ error: UserError.USER_EXISTS }, { status: 400 });
         }
 
@@ -229,11 +242,12 @@ export async function POST(req: Request) {
                 if (userType === UserType.SERVICE_MEMBER) {
                     const serviceMemberData: any = {
                         userId: newUser.id,
-                        ...(sanitizedBody.addressLineOne && { addressLineOne: sanitizedBody.addressLineOne }),
-                        ...(sanitizedBody.addressLineTwo && { addressLineTwo: sanitizedBody.addressLineTwo }),
-                        ...(sanitizedBody.branch && { branch: sanitizedBody.branch }),
-                        ...(sanitizedBody.country && { country: sanitizedBody.country }),
-                        ...(sanitizedBody.state && { state: sanitizedBody.state }),
+                        ...(addressLineOne && { addressLineOne: addressLineOne }),
+                        ...(addressLineTwo && { addressLineTwo: addressLineTwo }),
+                        ...(branch && { branch: branch }),
+                        ...(country && { country: country }),
+                        ...(state && { state: state }),
+                        ...(zipCode && { zipCode: zipCode })
                     };
 
                     await prisma.serviceMember.create({
@@ -243,9 +257,7 @@ export async function POST(req: Request) {
 
                 return newUser;
             } catch (error) {
-                if (error instanceof Error) {
-                    throw new Error(`Transaction failed: ${error.message}`);
-                }
+                return NextResponse.json({ error: "Registration failed" }, { status: 500 });
             }
         });
 
@@ -254,13 +266,12 @@ export async function POST(req: Request) {
             { status: 201 }
         );
 
-    } catch (error) {
-        console.error("Registration error:", error);
-        if (error instanceof PrismaClientKnownRequestError) {
-            return NextResponse.json(
-                { error: "Database operation failed" },
-                { status: 500 }
-            );
+    } catch (error: unknown) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') { 
+                return NextResponse.json({ error: "Email already exists" }, { status: 409 });
+            }
+            return NextResponse.json({ error: "Database operation failed", message: error.message }, { status: 500 });
         }
         if (error instanceof Error) {
             return NextResponse.json(

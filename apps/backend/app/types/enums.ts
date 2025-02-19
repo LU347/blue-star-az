@@ -40,7 +40,7 @@ export interface CreateUserRequest {
     phoneNumber: string;
     userType: UserType;
     gender: Gender;
-    branch?: Branch;
+    branch: Branch;
     addressLineOne?: string;
     addressLineTwo?: string;
     country?: string;
