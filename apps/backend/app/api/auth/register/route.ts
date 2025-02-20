@@ -150,6 +150,7 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
     }
 
     if (!isPasswordValid(sanitizedBody.password)) {
+        console.error(isPasswordValid(sanitizedBody.password));
         return { error: UserError.VALIDATION_ERR, message: "Invalid password format", status: 400 };
     }
 
@@ -211,14 +212,13 @@ export async function POST(req: Request) {
 
         const validationError = validateUserInput(sanitizedBody);
         if (validationError) {
-            return NextResponse.json({ error: validationError.message || "Validation error" }, { status: validationError.status || 400 });
+            return NextResponse.json({ error: validationError.message }, { status: validationError.status || 400 });
         }
 
         const { firstName, lastName, email, password, phoneNumber, userType, gender, addressLineOne, addressLineTwo, branch, country, state, zipCode } = sanitizedBody;
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
-            console.log("User already exists:", existingUser); // Log if user already exists
             return NextResponse.json({ error: UserError.USER_EXISTS }, { status: 400 });
         }
 

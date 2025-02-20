@@ -49,7 +49,7 @@ const Signup: React.FC = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message || "Signup failed");
+                throw new Error(data.message);
             }
 
             setSuccess("Signup successful!");

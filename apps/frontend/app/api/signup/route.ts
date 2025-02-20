@@ -43,7 +43,7 @@ export async function POST(req: Request) {
         const data = await response.json();
 
         if (!response.ok) {
-            return NextResponse.json({ message: data.message || "Signup failed" }, { status: response.status });
+            return NextResponse.json({ message: data.error }, { status: response.status });
         }
 
         return NextResponse.json({ message: "Signup successful", user: data }, { status: 200 });
