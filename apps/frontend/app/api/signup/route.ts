@@ -1,3 +1,5 @@
+"use server";
+
 import { NextResponse } from "next/server";
 
 const API_URL = "http://localhost:3001/api/auth/register"; // temp 

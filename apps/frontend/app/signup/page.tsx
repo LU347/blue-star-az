@@ -3,8 +3,10 @@
 import FormComponent from "@/components/FormComponent/Form";
 import { signupFields } from "./fields";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const Signup: React.FC = () => {
+    const router = useRouter();
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -28,14 +30,20 @@ const Signup: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value.trim() }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
         setSuccess(null);
+
+        if (!formData.email || !formData.password) {
+            setError("Email and password are required.");
+            setLoading(false);
+            return;
+        }
 
         try {
             const response = await fetch("/api/signup", {
@@ -53,6 +61,11 @@ const Signup: React.FC = () => {
             }
 
             setSuccess("Signup successful!");
+
+            setTimeout(() => {
+                router.push("/profile");
+            }, 2000);
+
         } catch(err) {
             if (err instanceof Error) {
                 setError(err.message || "An error occurred");

@@ -1,12 +1,18 @@
 
 /*
     Required fields:
-    email, password, first & last name, gender, branch
+    email, password, first & last name, gender, branch, phoneNumber
 
     Optional:
-    phoneNumber, address fields (since there's different types of military addresses)
+    address fields (since there's different types of military addresses)
     Address format based on https://support.govx.com/article?id=1176&sectionId=1025
 */
+
+const emailPattern = new RegExp("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+const emailTitle = "Please enter a valid email address"
+
+const passPattern = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
+const passTitle = "Password must at least be 8 characters long and include at least one uppercase later, one lowercase letter, one number, and one special character.";
 export const signupFields = [
     {
         name: "email",
@@ -14,7 +20,9 @@ export const signupFields = [
         type: "email",
         placeholder: "Email Address",
         ariaLabel: "email_address_label",
-        required: true
+        required: true,
+        pattern: emailPattern,
+        title: emailTitle
     },
     {
         name: "password",
@@ -22,7 +30,9 @@ export const signupFields = [
         type: "password",
         placeholder: "Password",
         ariaLabel: "password_label",
-        required: true
+        required: true,
+        pattern: passPattern,
+        title: passTitle
     },
     {
         name: "confirmPassword",
@@ -30,7 +40,9 @@ export const signupFields = [
         type: "password",
         placeholder: "Password",
         ariaLabel: "confirm_password_label",
-        required: true
+        required: true,
+        pattern: passPattern,
+        title: passTitle
     },
     {
         name: "phoneNumber",

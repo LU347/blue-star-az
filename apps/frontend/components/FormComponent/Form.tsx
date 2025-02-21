@@ -9,6 +9,8 @@ interface FormField {
     ariaLabel: string;
     options?: { value: string; label: string }[];
     required?: boolean;
+    pattern?: RegExp;
+    title?: string;
 }
 
 interface FormComponentProps {
@@ -21,8 +23,9 @@ interface FormComponentProps {
     linkHref: string;
     ariaLabel: string;
     formData: Record<string, string>;
+    pattern?: RegExp;
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-    onSubmit: (e: React.FormEvent) => void;
+    onSubmit: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
 }
 
 const FormComponent: React.FC<FormComponentProps> = ({
@@ -37,7 +40,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
     formData,
     onChange,
     onSubmit,
-}) => {
+}) => {  
+
     return (
         <div className={styles.formPage}>
             <h1 className="text-3xl font-semibold mb-6">{title}</h1>
@@ -46,7 +50,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     <div key={index} className={styles.formField}>
                         <label htmlFor={field.name}>
                             {field.label}
-                            {field.required && <span style={{ color: 'red' }}> * </span>}
+                            {field.required && <span style={{ color: "red" }}> * </span>}
                         </label>
                         {
                             field.type === "select" ? (
@@ -65,12 +69,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                 </select>
                             ) : (
                                 <input
-                                    name={field.name}
                                     type={field.type}
+                                    name={field.name}
                                     placeholder={field.placeholder}
                                     aria-labelledby={field.ariaLabel}
                                     value={formData[field.name] || ""}
                                     onChange={onChange}
+                                    pattern={field.pattern?.source}
+                                    title={field.title}
                                     required={field.required}
                                 />
                             )
