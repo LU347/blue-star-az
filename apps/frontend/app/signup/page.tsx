@@ -38,8 +38,10 @@ const Signup: React.FC = () => {
         setError(null);
         setSuccess(null);
 
-        if (!formData.email || !formData.password) {
-            setError("Email and password are required.");
+        const requiredFields = ["email", "password", "phoneNumber", "firstName", "lastName", "gender", "branch", "userType"];
+        const missingFields = requiredFields.filter(field => !formData[field]);
+        if (missingFields.length > 0) {
+            setError(`Required fields missing: ${missingFields.join(', ')}`);
             setLoading(false);
             return;
         }
