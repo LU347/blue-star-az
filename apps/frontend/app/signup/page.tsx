@@ -14,14 +14,13 @@ const Signup: React.FC = () => {
         firstName: "",
         lastName: "",
         gender: "",
-        military_branch: "",
-        address_one: "",
-        address_two: "",
+        branch: "",
+        addressLineOne: "",
+        addressLineTwo: "",
         city: "",
-        zip_code: "",
+        zipCode: "",
         country: "",
         state: "",
-        branch: "",
     });
 
     const [loading, setLoading] = useState(false);
