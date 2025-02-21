@@ -4,6 +4,7 @@ import FormComponent from "@/components/FormComponent/Form";
 import { signupFields } from "./fields";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CreateUserRequest } from "../types/auth";
 
 const Signup: React.FC = () => {
     const router = useRouter();
@@ -37,14 +38,6 @@ const Signup: React.FC = () => {
         setLoading(true);
         setError(null);
         setSuccess(null);
-
-        const requiredFields = ["email", "password", "phoneNumber", "firstName", "lastName", "gender", "branch", "userType"];
-        const missingFields = requiredFields.filter(field => !formData[field]);
-        if (missingFields.length > 0) {
-            setError(`Required fields missing: ${missingFields.join(', ')}`);
-            setLoading(false);
-            return;
-        }
 
         try {
             const response = await fetch("/api/signup", {
