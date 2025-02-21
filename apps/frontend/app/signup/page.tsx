@@ -63,9 +63,9 @@ const Signup: React.FC = () => {
             setSuccess("Signup successful!");
 
             setTimeout(() => {
-                router.push("/profile");
+                router.push("/profile")
             }, 2000);
-
+            
         } catch(err) {
             if (err instanceof Error) {
                 setError(err.message || "An error occurred");

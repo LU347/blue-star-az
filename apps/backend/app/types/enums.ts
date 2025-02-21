@@ -43,6 +43,7 @@ export interface CreateUserRequest {
     branch: Branch;
     addressLineOne?: string;
     addressLineTwo?: string;
+    city?: string;
     country?: string;
     state?: string;     
     zipCode?: string;        

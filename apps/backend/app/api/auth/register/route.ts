@@ -286,7 +286,7 @@ export async function POST(req: Request) {
 
                 return newUser;
             } catch (error) {
-                return NextResponse.json({ error: "Registration failed" }, { status: 500 });
+                throw error;
             }
         });
 
