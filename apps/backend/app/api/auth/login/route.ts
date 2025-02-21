@@ -53,6 +53,17 @@ export function validateUserInput(body: any) {
 export async function POST(req: Request) {
     try {
         const body: LoginRequestBody = await req.json();
+        // let body: LoginRequestBody;
+        // const contentType = req.headers.get("Content-Type") || "";
+        // if (contentType.includes("application/json")) {
+        //     body = await req.json();
+        // } else {
+        //     const formData = await req.formData();
+        //     body = {
+        //         email: formData.get("email") as string,
+        //         password: formData.get("password") as string,
+        //     };
+        // }
         const validationError = validateUserInput(body);
         if (validationError) {
             return NextResponse.json(validationError, { status: validationError.status });
