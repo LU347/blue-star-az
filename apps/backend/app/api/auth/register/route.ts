@@ -158,7 +158,7 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
     // Validate first and last names
     if (!validator.matches(sanitizedBody.firstName, /^[A-Za-z'-]+$/) || 
         !validator.matches(sanitizedBody.lastName, /^[A-Za-z'-]+$/)) {
-        return { error: UserError.VALIDATION_ERR, message: "Name contains non-alphabetical characters" }
+        return { error: UserError.VALIDATION_ERR, message: "Name contains non-alphabetical characters", status: 400 }
     }
 
     // Validate enum values
