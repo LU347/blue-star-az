@@ -1,29 +1,50 @@
 import { NextResponse } from "next/server";
-import { Gender, PrismaClient, UserType, Branch } from "@prisma/client";
+
 import bcrypt from "bcryptjs";
+import validator, { escape as escapeHtml } from "validator";
+
+import { Prisma, Gender, PrismaClient, UserType, Branch } from "@prisma/client";
+
 import { UserError, Status, CreateUserRequest } from "app/types/enums";
-import { sanitize } from "class-sanitizer";
-import { escape as escapeHtml } from "validator";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
-const EMAIL_REGEX: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PASSWORD_REGEX: RegExp = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
-const PHONE_NUM_REGEX: RegExp = /^\+?[1-9][0-9]{7,14}$/;
-
+// Extend the global object to include an optional Prisma client instance
 const prismaGlobal = global as typeof global & {
     prisma?: PrismaClient
 }
 
+/**
+ * Initializes the Prisma Client.
+ * - Reuses an existing Prisma instance if available (to prevent multiple connections in development).
+ * - Creates a new Prisma Client instance if none exists.
+ * - Enables query logging in development mode.
+ */
 export const prisma = prismaGlobal.prisma ?? new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query"] : [],
 });
 
+// Store the Prisma instance globally in development to prevent multiple instances due to hot-reloading.
 if (process.env.NODE_ENV !== "production") prismaGlobal.prisma = prisma
 
+// This should remove nonalphanumeric characters and remove extra whitespace.
 function sanitizeInput(input: string): string {
-    return escapeHtml(input.trim());
+    if (input) {
+        return escapeHtml(input.trim());
+    }
+    return "";
 }
 
+/**
+ * Sanitizes user input from a `CreateUserRequest` object.
+ *
+ * This function ensures that all string-based fields are sanitized to prevent potential 
+ * security risks such as XSS (Cross-Site Scripting). It also ensures:
+ * - The email is converted to lowercase.
+ * - Optional address and location fields are sanitized only if they exist.
+ * - Enum fields (`gender`, `userType`, `branch`) are cast to their respective types.
+ *
+ * @param {CreateUserRequest} body - The raw user input object containing registration details.
+ * @returns {CreateUserRequest} - A sanitized version of the user input object.
+ */
 function sanitizeBody(body: CreateUserRequest) {
     const sanitizedBody = {
         ...body,
@@ -32,8 +53,9 @@ function sanitizeBody(body: CreateUserRequest) {
         firstName: sanitizeInput(body.firstName),
         lastName: sanitizeInput(body.lastName),
         phoneNumber: sanitizeInput(body.phoneNumber),
-        gender: body.gender as Gender,
-        userType: body.userType as UserType,
+        gender: sanitizeInput(body.gender) as Gender,
+        userType: sanitizeInput(body.userType) as UserType,
+        branch: sanitizeInput(body.branch) as Branch,
     };
 
     if (body.addressLineOne) {
@@ -47,9 +69,6 @@ function sanitizeBody(body: CreateUserRequest) {
     }
     if (body.state) {
         sanitizedBody.state = sanitizeInput(body.state) || "";
-    }
-    if (body.branch) {
-        sanitizedBody.branch = body.branch as Branch;
     }
 
     return sanitizedBody;
@@ -91,7 +110,7 @@ function isEnumValue<T extends { [key: string]: string | number }>(enumObj: T, v
  *          (e.g., missing fields or invalid type) along with an HTTP status code (typically 400).
  */
 function isEmailValid(email: string): boolean {
-    return EMAIL_REGEX.test(email);
+    return validator.isEmail(email);
 }
 
 /*
@@ -103,21 +122,22 @@ function isEmailValid(email: string): boolean {
     - At least one special character (#?!@$%^&*-)
 */
 function isPasswordValid(password: string): boolean {
-    return PASSWORD_REGEX.test(password);
+    return validator.isStrongPassword(password);
 }
 
 /*
     Number format:
     Basic international phone number validation without delimiters and optional plus sign
-    +xxxxxxxxxxx
+    + xxxxxxxxxxx or xxxxxxxxxx
 */
 function isPhoneNumberValid(number: string): boolean {
-    return PHONE_NUM_REGEX.test(number);
+    return validator.isMobilePhone(number);
 }
 
 /*
     Validates user input:
     - Checks if any of the required fields are missing
+    - Checks if any of the name fields contains non-alphabetical characters.
     - Checks if the proper enum values are used
     - Checks if the user is a volunteer and doesn't contain any serviceMember fields
     - Checks if the user is a service member and is missing the required branch value
@@ -135,6 +155,13 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
         }
     }
 
+    // Validate first and last names
+    if (!validator.matches(sanitizedBody.firstName, /^[A-Za-z'-]+$/) || 
+        !validator.matches(sanitizedBody.lastName, /^[A-Za-z'-]+$/)) {
+        return { error: UserError.VALIDATION_ERR, message: "Name contains non-alphabetical characters", status: 400 }
+    }
+
+    // Validate enum values
     if (!isEnumValue(UserType, sanitizedBody.userType) || !isEnumValue(Gender, sanitizedBody.gender)) {
         return {
             error: UserError.INVALID_TYPE,
@@ -143,23 +170,36 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
         };
     }
 
-    if (!isEmailValid(sanitizedBody.email) || !isPasswordValid(sanitizedBody.password) || !isPhoneNumberValid(sanitizedBody.phoneNumber)) {
-        return { error: UserError.VALIDATION_ERR, status: 400 };
+    // Validate email format
+    if (!isEmailValid(sanitizedBody.email)) {
+        return { error: UserError.VALIDATION_ERR, message: "Invalid email format", status: 400 };
     }
 
+    // Validate password strength
+    if (!isPasswordValid(sanitizedBody.password)) {
+        return { error: UserError.VALIDATION_ERR, message: "Invalid password format", status: 400 };
+    }
+
+    // Validate phone number format
+    if (!isPhoneNumberValid(sanitizedBody.phoneNumber)) {
+        return { error: UserError.VALIDATION_ERR, message: "Invalid phone number format", status: 400 };
+    }
+
+    // Ensures that the volunteer account does not contain any fields/values associated with a service member account.
     if (sanitizedBody.userType === UserType.VOLUNTEER) {
         if (sanitizedBody.branch || sanitizedBody.addressLineOne || sanitizedBody.addressLineTwo || sanitizedBody.country || sanitizedBody.state) {
-            return { error: UserError.VALIDATION_ERR, status: 400 };
+            return { error: UserError.VALIDATION_ERR, message: "Volunteer user should not have service member fields", status: 400 };
         }
     }
 
+    // Ensures that a service member accounst has the required branch field and a valid branch value
     if (sanitizedBody.userType === UserType.SERVICE_MEMBER) {
         if (!sanitizedBody.branch) {
-            return { error: UserError.MISSING_FIELDS, status: 400 };
+            return { error: UserError.MISSING_FIELDS, message: "Missing branch for service member", status: 400 };
         }
 
         if (!isEnumValue(Branch, sanitizedBody.branch)) {
-            return { error: UserError.INVALID_TYPE, status: 400 };
+            return { error: UserError.INVALID_TYPE, message: "Invalid branch type", status: 400 };
         }
     }
 
@@ -196,13 +236,15 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
+
         const sanitizedBody = sanitizeBody(body);
+
         const validationError = validateUserInput(sanitizedBody);
         if (validationError) {
-            return NextResponse.json(validationError, { status: validationError.status });
+            return NextResponse.json({ error: validationError.message }, { status: validationError.status || 400 });
         }
 
-        const { firstName, lastName, email, password, phoneNumber, userType, gender, addressLineOne, addressLineTwo, branch, country, state } = sanitizedBody;
+        const { firstName, lastName, email, password, phoneNumber, userType, gender, addressLineOne, addressLineTwo, branch, country, state, zipCode } = sanitizedBody;
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
@@ -229,11 +271,12 @@ export async function POST(req: Request) {
                 if (userType === UserType.SERVICE_MEMBER) {
                     const serviceMemberData: any = {
                         userId: newUser.id,
-                        ...(sanitizedBody.addressLineOne && { addressLineOne: sanitizedBody.addressLineOne }),
-                        ...(sanitizedBody.addressLineTwo && { addressLineTwo: sanitizedBody.addressLineTwo }),
-                        ...(sanitizedBody.branch && { branch: sanitizedBody.branch }),
-                        ...(sanitizedBody.country && { country: sanitizedBody.country }),
-                        ...(sanitizedBody.state && { state: sanitizedBody.state }),
+                        ...(addressLineOne && { addressLineOne: addressLineOne }),
+                        ...(addressLineTwo && { addressLineTwo: addressLineTwo }),
+                        ...(branch && { branch: branch }),
+                        ...(country && { country: country }),
+                        ...(state && { state: state }),
+                        ...(zipCode && { zipCode: zipCode })
                     };
 
                     await prisma.serviceMember.create({
@@ -243,9 +286,7 @@ export async function POST(req: Request) {
 
                 return newUser;
             } catch (error) {
-                if (error instanceof Error) {
-                    throw new Error(`Transaction failed: ${error.message}`);
-                }
+                throw error;
             }
         });
 
@@ -254,13 +295,12 @@ export async function POST(req: Request) {
             { status: 201 }
         );
 
-    } catch (error) {
-        console.error("Registration error:", error);
-        if (error instanceof PrismaClientKnownRequestError) {
-            return NextResponse.json(
-                { error: "Database operation failed" },
-                { status: 500 }
-            );
+    } catch (error: unknown) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') { 
+                return NextResponse.json({ error: "Email already exists" }, { status: 409 });
+            }
+            return NextResponse.json({ error: "Database operation failed", message: error.message }, { status: 500 });
         }
         if (error instanceof Error) {
             return NextResponse.json(
