@@ -3,7 +3,7 @@ import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient()
 
-const parsedRounds = parseInt(process.env.HASH_ROUNDS || '', 12);
+const parsedRounds = parseInt(process.env.HASH_ROUNDS || '', 10);
 const HASH_ROUNDS = (!Number.isNaN(parsedRounds) && parsedRounds > 0) ? parsedRounds : 12;
 
 prisma.$use(async (params, next) => {
