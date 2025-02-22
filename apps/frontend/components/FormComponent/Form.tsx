@@ -1,8 +1,8 @@
 "use client";
 import Link from 'next/link';
 import styles from './FormComponent.module.css';
-
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react'; // 🔹 Import loader icon
 
 interface FormField {
     name: string;
@@ -23,8 +23,8 @@ interface FormComponentProps {
     linkText: string;
     linkHref: string;
     ariaLabel: string;
-    onSubmitSuccess?: (result: any) => void; // Callback for success
-    onSubmitError?: (error: string) => void; // Callback for error
+    onSubmitSuccess?: (result: any) => void;
+    onSubmitError?: (error: string) => void;
 }
 
 const FormComponent: React.FC<FormComponentProps> = ({
@@ -40,16 +40,15 @@ const FormComponent: React.FC<FormComponentProps> = ({
     onSubmitError,
 }) => {
     const [error, setError] = useState<string | null>(null);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    const [loading, setLoading] = useState(false); // 🔹 Loading state
+    const apiUrl = process.env.NEXT_PUBLIC_PRODUCTION_API_URL;
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log("ee");
+        setLoading(true); // 🔹 Start loading
         const formData = new FormData(e.currentTarget);
-        
         const data = Object.fromEntries(formData);
-        console.log(data, apiUrl+action);
-
+        
         try {
             const response = await fetch(apiUrl + action, {
                 method: 'POST',
@@ -64,58 +63,48 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 const errorMsg = result.error || 'Submission failed';
                 setError(errorMsg);
                 if (onSubmitError) onSubmitError(errorMsg);
-                return;
+            } else {
+                setError(null);
+                if (onSubmitSuccess) onSubmitSuccess(result);
             }
-
-            setError(null); // Clear any previous error
-            if (onSubmitSuccess) onSubmitSuccess(result); // Pass result to parent
         } catch (err) {
-            const errorMsg = 'An error occurred during submission';
-            setError(errorMsg);
-            if (onSubmitError) onSubmitError(errorMsg);
+            setError('An error occurred during submission');
+            if (onSubmitError) onSubmitError('An error occurred during submission');
+        } finally {
+            setLoading(false); // 🔹 Stop loading
         }
     };
+
     return (
         <div className={styles.formPage}>
             <h1 className="text-3xl font-semibold mb-6">{title}</h1>
-            <form   onSubmit={handleSubmit} name={formName} className={styles.form} aria-label={ariaLabel}>
+            <form onSubmit={handleSubmit} name={formName} className={styles.form} aria-label={ariaLabel}>
                 {fields.map((field, index) => (
                     <div key={index} className={styles.formField}>
                         <label htmlFor={field.name}>
                             {field.label}
                             {field.required && <span style={{ color: 'red' }}> * </span>}
                         </label>
-                        {
-                            field.type === "select" ? (
-                                <select
-                                    name={field.name}
-                                    aria-labelledby={field.ariaLabel}
-                                    defaultValue=""
-                                >
-                                    <option value="">{field.placeholder}</option>
-                                    {
-                                        field.options?.map((option, idx) => (
-                                            <option key={idx} value={option.value}>{option.label}</option>
-                                        ))
-                                    }
-                                </select>
-                            ) : (
-                                <input
-                                    name={field.name}
-                                    type={field.type}
-                                    placeholder={field.placeholder}
-                                    aria-labelledby={field.ariaLabel}
-                                />
-                            )
-                        }
-
+                        {field.type === "select" ? (
+                            <select name={field.name} aria-labelledby={field.ariaLabel} defaultValue="">
+                                <option value="">{field.placeholder}</option>
+                                {field.options?.map((option, idx) => (
+                                    <option key={idx} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <input name={field.name} type={field.type} placeholder={field.placeholder} aria-labelledby={field.ariaLabel} />
+                        )}
                     </div>
                 ))}
-                <button type="submit">{buttonText}</button>
+                <button type="submit" disabled={loading} className="flex items-center justify-center gap-2">
+                    {loading ? <Loader2 className="animate-spin w-5 h-5" /> : null} {/* 🔹 Spinning loader */}
+                    {buttonText}
+                </button>
             </form>
             <Link href={linkHref}>{linkText}</Link>
         </div>
-    )
-}
+    );
+};
 
 export default FormComponent;

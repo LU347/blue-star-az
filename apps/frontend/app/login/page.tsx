@@ -11,6 +11,7 @@ const Login: React.FC = () => {
             type: "email",
             placeholder: "Email Address",
             ariaLabel: "email_address_label",
+            required: true
         },
         {
             name: "password",
@@ -18,16 +19,25 @@ const Login: React.FC = () => {
             type: "password",
             placeholder: "Password",
             ariaLabel: "password_label",
+            required: true
         },
     ];
     const router = useRouter();
-    
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
-    const handleLoginSuccess = (result: any) => {
+    interface LoginResponse {
+        token: string;
+        expiresIn?: number;
+    }
+
+    const REDIRECT_DELAY = 500;
+
+    const handleLoginSuccess = (result: LoginResponse) => {
+        if (!result.token) {
+            throw new Error('Invalid login response: missing token');
+        }
         localStorage.setItem('token', result.token);
         toast.success("Login successful! Redirecting...", { autoClose: 2000 });
-        setTimeout(() => router.push('/profile'), 2000);
+        setTimeout(() => router.push('/profile'), REDIRECT_DELAY);
     };
 
     const handleLoginError = (error: string) => {
