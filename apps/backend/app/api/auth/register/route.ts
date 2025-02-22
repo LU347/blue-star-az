@@ -58,6 +58,20 @@ function sanitizeBody(body: CreateUserRequest) {
         branch: sanitizeInput(body.branch) as Branch,
     };
 
+    /*
+        Currently, I am manually checking each optional field for presence and sanitizing it. 
+        I attempted to refactor this by iterating through a list of optional fields but encountered a 
+        "type string is not assignable to type never" error, which I could not resolve in time.
+    
+        For now, I'm leaving the implementation as it is, but I plan to refactor this to use an 
+        array of optional fields for better scalability and maintainability once I have more time to 
+        address the type issues.
+
+        I believe the root cause of this issue lies in how I'm defining my interface (CreateUserRequest). 
+        I think I need to separate the optional and required fields into two distinct interfaces and then 
+        create another interface that merges them. This should help clarify the structure and resolve the 
+        typing issues I'm encountering.
+    */
     if (body.addressLineOne) {
         sanitizedBody.addressLineOne = sanitizeInput(body.addressLineOne) || "";
     }
@@ -69,6 +83,9 @@ function sanitizeBody(body: CreateUserRequest) {
     }
     if (body.state) {
         sanitizedBody.state = sanitizeInput(body.state) || "";
+    }
+    if (body.city) {
+        sanitizedBody.city = sanitizeInput(body.city) || "";
     }
 
     return sanitizedBody;
@@ -156,8 +173,8 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
     }
 
     // Validate first and last names
-    if (!validator.matches(sanitizedBody.firstName, /^[A-Za-z'-]+$/) || 
-        !validator.matches(sanitizedBody.lastName, /^[A-Za-z'-]+$/)) {
+    if (!validator.matches(sanitizedBody.firstName, /^[A-Za-z' -]+(?: [A-Za-z' -]+)*$/) ||
+        !validator.matches(sanitizedBody.lastName, /^[A-Za-z' -]+(?: [A-Za-z' -]+)*$/)) {
         return { error: UserError.VALIDATION_ERR, message: "Name contains non-alphabetical characters", status: 400 }
     }
 
@@ -244,7 +261,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: validationError.message }, { status: validationError.status || 400 });
         }
 
-        const { firstName, lastName, email, password, phoneNumber, userType, gender, addressLineOne, addressLineTwo, branch, country, state, zipCode } = sanitizedBody;
+        const { firstName, lastName, email, password, phoneNumber, userType, gender, addressLineOne, addressLineTwo, branch, country, state, zipCode, city } = sanitizedBody;
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
@@ -276,7 +293,8 @@ export async function POST(req: Request) {
                         ...(branch && { branch: branch }),
                         ...(country && { country: country }),
                         ...(state && { state: state }),
-                        ...(zipCode && { zipCode: zipCode })
+                        ...(zipCode && { zipCode: zipCode }),
+                        ...(city && { city: city })
                     };
 
                     await prisma.serviceMember.create({
@@ -297,7 +315,7 @@ export async function POST(req: Request) {
 
     } catch (error: unknown) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            if (error.code === 'P2002') { 
+            if (error.code === 'P2002') {
                 return NextResponse.json({ error: "Email already exists" }, { status: 409 });
             }
             return NextResponse.json({ error: "Database operation failed", message: error.message }, { status: 500 });
