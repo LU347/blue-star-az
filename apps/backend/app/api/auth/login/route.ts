@@ -3,7 +3,6 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { UserError, Status } from "app/types/enums";
-import { log } from "console";
 
 const prisma = new PrismaClient();
 

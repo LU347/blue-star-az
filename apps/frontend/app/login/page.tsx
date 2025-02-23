@@ -3,6 +3,12 @@ import FormComponent from "@/components/FormComponent/Form";
 import { useRouter } from 'next/navigation'; // For redirect
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
+interface LoginResponse {
+    token: string;
+    expiresIn?: number;
+}
+
 const Login: React.FC = () => {
     const loginFields = [
         {
@@ -23,11 +29,6 @@ const Login: React.FC = () => {
         },
     ];
     const router = useRouter();
-
-    interface LoginResponse {
-        token: string;
-        expiresIn?: number;
-    }
 
     const REDIRECT_DELAY = 500;
 
