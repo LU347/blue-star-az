@@ -33,21 +33,29 @@ function sanitizeInput(input: string): string {
     return "";
 }
 
+function isCreateUserRequest(obj: any): obj is CreateUserRequest {
+    return typeof obj === "object" && obj !== null;
+}
+
 /**
- * Sanitizes user input from a `CreateUserRequest` object.
+ * Sanitizes and normalizes a CreateUserRequest object.
  *
- * This function ensures that all string-based fields are sanitized to prevent potential 
- * security risks such as XSS (Cross-Site Scripting). It also ensures:
- * - The email is converted to lowercase.
- * - Optional address and location fields are sanitized only if they exist.
- * - Enum fields (`gender`, `userType`, `branch`) are cast to their respective types.
+ * This function cleans string-based fields to mitigate security risks such as XSS by trimming whitespace
+ * and escaping HTML characters. It converts the email to lowercase, sanitizes the password, first name,
+ * last name, and phone number, and processes optional address and location fields (addressLineOne,
+ * addressLineTwo, country, state, and city) only if they exist. Enum fields (gender, userType, branch)
+ * are also cast to their respective types.
  *
- * @param {CreateUserRequest} body - The raw user input object containing registration details.
- * @returns {CreateUserRequest} - A sanitized version of the user input object.
+ * @param body - The raw user registration input.
+ * @returns A sanitized version of the user registration input.
  */
-function sanitizeBody(body: CreateUserRequest) {
-    const sanitizedBody = {
-        ...body,
+function sanitizeBody(body: unknown): CreateUserRequest {
+    if (!isCreateUserRequest(body)) {
+        throw new Error("Invalid body format");
+    }
+
+    let sanitizedBody: CreateUserRequest = {
+        ...body as CreateUserRequest,
         email: sanitizeInput(body.email)?.toLowerCase() || "",
         password: sanitizeInput(body.password),
         firstName: sanitizeInput(body.firstName),
@@ -71,7 +79,16 @@ function sanitizeBody(body: CreateUserRequest) {
         I think I need to separate the optional and required fields into two distinct interfaces and then 
         create another interface that merges them. This should help clarify the structure and resolve the 
         typing issues I'm encountering.
+
+        Refactor attempt:
+        const optionalFields: (keyof CreateUserRequest)[] = ["addressLineOne", "addressLineTwo", "country", "state", "city", "zipCode"];
+        for (const field of optionalFields) {
+            if (body[field]) {
+                sanitizedBody[field] = sanitizeInput(body[field]) || "";  //sanitizedBody[field] is getting a type string is not assignable to type never error
+            }
+        }
     */
+
     if (body.addressLineOne) {
         sanitizedBody.addressLineOne = sanitizeInput(body.addressLineOne) || "";
     }
@@ -86,6 +103,9 @@ function sanitizeBody(body: CreateUserRequest) {
     }
     if (body.city) {
         sanitizedBody.city = sanitizeInput(body.city) || "";
+    }
+    if (body.zipCode) {
+        sanitizedBody.zipCode = sanitizeInput(body.zipCode) || "";
     }
 
     return sanitizedBody;
@@ -151,15 +171,20 @@ function isPhoneNumberValid(number: string): boolean {
     return validator.isMobilePhone(number);
 }
 
-/*
-    Validates user input:
-    - Checks if any of the required fields are missing
-    - Checks if any of the name fields contains non-alphabetical characters.
-    - Checks if the proper enum values are used
-    - Checks if the user is a volunteer and doesn't contain any serviceMember fields
-    - Checks if the user is a service member and is missing the required branch value
-    - Returns an appropriate response based on success / failure.
-*/
+/**
+ * Validates a sanitized user registration request.
+ *
+ * This function checks that all required fields are present and properly formatted. It verifies that:
+ * - Mandatory fields (email, password, firstName, lastName, phoneNumber, gender) are provided.
+ * - First and last names contain only alphabetical characters, spaces, apostrophes, or hyphens.
+ * - The provided values for user type and gender match the expected enum values.
+ * - Email, password, and phone number formats are valid.
+ * - For volunteer users, no service member-specific fields (branch, addressLineOne, addressLineTwo, country, state) are present.
+ * - For service members, a valid branch is provided.
+ *
+ * @param sanitizedBody - The sanitized input data for user registration.
+ * @returns An error object with details ({ error, message, status }) if any validation fails, or null if the input is valid.
+ */
 export function validateUserInput(sanitizedBody: CreateUserRequest) {
     const requiredFields: (keyof CreateUserRequest)[] = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
     for (const field of requiredFields) {
@@ -204,8 +229,15 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
 
     // Ensures that the volunteer account does not contain any fields/values associated with a service member account.
     if (sanitizedBody.userType === UserType.VOLUNTEER) {
-        if (sanitizedBody.branch || sanitizedBody.addressLineOne || sanitizedBody.addressLineTwo || sanitizedBody.country || sanitizedBody.state) {
-            return { error: UserError.VALIDATION_ERR, message: "Volunteer user should not have service member fields", status: 400 };
+        const serviceMemberFields: (keyof CreateUserRequest)[] = ["addressLineOne", "addressLineTwo", "country", "state", "city", "zipCode"];
+        const hasServiceMemberFields = serviceMemberFields.some(field => sanitizedBody[field]);
+    
+        if (hasServiceMemberFields) {
+            return {
+                error: UserError.VALIDATION_ERR,
+                message: "Volunteer user should not have service member fields",
+                status: 400,
+            };
         }
     }
 
@@ -224,28 +256,24 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
 }
 
 /**
- * Handles the user registration process.
+ * Processes a POST request to register a new user.
  *
- * This function processes a POST request for user registration by performing the following steps:
+ * This function handles user registration by performing the following operations:
+ * - Parses the JSON body of the incoming request.
+ * - Sanitizes and validates the user input. If validation fails, returns a JSON error response.
+ * - Checks whether a user with the provided email already exists, returning an error if one is found.
+ * - Hashes the user's password using bcrypt.
+ * - Creates a new user record in the database.
+ * - If the user is a service member, creates an associated record with additional details—such as address lines, branch, country, state, zip code, and city if provided.
+ * - Catches errors from database operations (e.g., duplicate email) and general exceptions, returning appropriate JSON responses.
  *
- * - Parses the incoming request's JSON body.
- * - Validates the user input using `validateUserInput`. If validation fails, returns an error response with the appropriate status code.
- * - Checks if a user with the provided email already exists in the database; if so, returns an error response indicating the user exists.
- * - Hashes the provided password with bcrypt.
- * - Creates a new user record in the database using the hashed password and provided user details.
- * - If the user type is `SERVICE_MEMBER`, creates an associated service member record with additional information such as address and branch details.
- * - Catches and logs any errors, returning a generic internal error response.
- *
- * @param req - The incoming Request object containing the user registration details in its JSON body.
- * @returns A JSON response indicating the result of the registration:
- *   - On success: a response with the registration success message and a status code of 201.
- *   - On validation failure, duplicate user, or processing error: a corresponding error message and status code.
+ * @param req - The incoming request containing registration details in its JSON body.
+ * @returns A JSON response indicating either successful registration with a 201 status code or an error message with the corresponding status code.
  *
  * @example
- * // Example usage in an API route:
  * const response = await POST(request);
  * if (response.status === 201) {
- *   // Registration was successful.
+ *   // Registration succeeded.
  * } else {
  *   // Handle registration error.
  * }
