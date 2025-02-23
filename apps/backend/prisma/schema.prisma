@@ -87,27 +87,27 @@ model Item {
   id           Int      @id @default(autoincrement())
   name         String
   description  String?
-  category_id  Int
+  categoryId  Int
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  category     Category @relation(fields: [category_id], references: [id])
+  category     Category @relation(fields: [categoryId], references: [id])
 
   transactions Transaction[]
 }
 
 model Transaction {
   id               Int              @id @default(autoincrement())
-  item_id          Int
-  transaction_type Transaction_Type
+  itemId          Int
+  transaction_type TransactionTypes
   notes            String?
   quantity         Int
   createdAt        DateTime         @default(now()) @map("created_at")
 
-  items            Item @relation(fields: [item_id], references: [id])
+  items            Item @relation(fields: [itemId], references: [id])
 }
 
-enum Transaction_Type {
+enum TransactionTypes {
   ADDITION
   REMOVAL
   UPDATE
