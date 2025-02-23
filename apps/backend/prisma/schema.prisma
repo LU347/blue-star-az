@@ -68,3 +68,47 @@ enum Branch {
   NATIONAL_GUARD
   MARINES
 }
+
+/**
+ * Models for the inventory manager
+ */
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  items       Item[]
+}
+
+model Item {
+  id           Int      @id @default(autoincrement())
+  name         String
+  description  String?
+  categoryId  Int
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  category     Category @relation(fields: [categoryId], references: [id])
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id               Int              @id @default(autoincrement())
+  itemId          Int
+  transaction_type TransactionTypes
+  notes            String?
+  quantity         Int
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  items            Item @relation(fields: [itemId], references: [id])
+}
+
+enum TransactionTypes {
+  ADDITION
+  REMOVAL
+  UPDATE
+}
