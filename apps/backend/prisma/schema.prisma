@@ -31,8 +31,9 @@ model ServiceMember {
   branch         Branch
   addressLineOne String?
   addressLineTwo String?
+  zipCode        String?
+  city           String?
   user           User     @relation("UserServiceMember", fields: [userId], references: [id], onDelete: Cascade)
-  zipCode       String?
 }
 
 model Volunteer {
