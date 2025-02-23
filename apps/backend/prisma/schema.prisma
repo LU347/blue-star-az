@@ -69,9 +69,9 @@ enum Branch {
   MARINES
 }
 
-/* 
-  Models for the inventory manager
-*/
+/**
+ * Models for the inventory manager
+ */
 
 model Category {
   id          Int      @id @default(autoincrement())
@@ -80,31 +80,31 @@ model Category {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  Items Items[]
+  items       Item[]
 }
 
-model Items {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?  
-  category_id Int
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+model Item {
+  id           Int      @id @default(autoincrement())
+  name         String
+  description  String?
+  category_id  Int
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  category    Category @relation(fields: [category_id], references: [id])
+  category     Category @relation(fields: [category_id], references: [id])
 
-  Transactions Transactions[]
+  transactions Transaction[]
 }
 
-model Transactions {
-  id               Int             @id @default(autoincrement())
-  item_id         Int
+model Transaction {
+  id               Int              @id @default(autoincrement())
+  item_id          Int
   transaction_type Transaction_Type
   notes            String?
   quantity         Int
-  createdAt       DateTime        @default(now()) @map("created_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
 
-  item            Items            @relation(fields: [item_id], references: [id])
+  items            Item @relation(fields: [item_id], references: [id])
 }
 
 enum Transaction_Type {
