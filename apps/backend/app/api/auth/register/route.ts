@@ -33,6 +33,10 @@ function sanitizeInput(input: string): string {
     return "";
 }
 
+function isCreateUserRequest(obj: any): obj is CreateUserRequest {
+    return typeof obj === "object" && obj !== null;
+}
+
 /**
  * Sanitizes and normalizes a CreateUserRequest object.
  *
@@ -45,9 +49,13 @@ function sanitizeInput(input: string): string {
  * @param body - The raw user registration input.
  * @returns A sanitized version of the user registration input.
  */
-function sanitizeBody(body: CreateUserRequest) {
-    const sanitizedBody = {
-        ...body,
+function sanitizeBody(body: unknown): CreateUserRequest {
+    if (!isCreateUserRequest(body)) {
+        throw new Error("Invalid body format");
+    }
+
+    let sanitizedBody: CreateUserRequest = {
+        ...body as CreateUserRequest,
         email: sanitizeInput(body.email)?.toLowerCase() || "",
         password: sanitizeInput(body.password),
         firstName: sanitizeInput(body.firstName),
@@ -71,7 +79,16 @@ function sanitizeBody(body: CreateUserRequest) {
         I think I need to separate the optional and required fields into two distinct interfaces and then 
         create another interface that merges them. This should help clarify the structure and resolve the 
         typing issues I'm encountering.
+
+        Refactor attempt:
+        const optionalFields: (keyof CreateUserRequest)[] = ["addressLineOne", "addressLineTwo", "country", "state", "city", "zipCode"];
+        for (const field of optionalFields) {
+            if (body[field]) {
+                sanitizedBody[field] = sanitizeInput(body[field]) || "";  //sanitizedBody[field] is getting a type string is not assignable to type never error
+            }
+        }
     */
+
     if (body.addressLineOne) {
         sanitizedBody.addressLineOne = sanitizeInput(body.addressLineOne) || "";
     }
@@ -86,6 +103,9 @@ function sanitizeBody(body: CreateUserRequest) {
     }
     if (body.city) {
         sanitizedBody.city = sanitizeInput(body.city) || "";
+    }
+    if (body.zipCode) {
+        sanitizedBody.zipCode = sanitizeInput(body.zipCode) || "";
     }
 
     return sanitizedBody;
@@ -209,8 +229,15 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
 
     // Ensures that the volunteer account does not contain any fields/values associated with a service member account.
     if (sanitizedBody.userType === UserType.VOLUNTEER) {
-        if (sanitizedBody.branch || sanitizedBody.addressLineOne || sanitizedBody.addressLineTwo || sanitizedBody.country || sanitizedBody.state) {
-            return { error: UserError.VALIDATION_ERR, message: "Volunteer user should not have service member fields", status: 400 };
+        const serviceMemberFields: (keyof CreateUserRequest)[] = ["addressLineOne", "addressLineTwo", "country", "state", "city", "zipCode"];
+        const hasServiceMemberFields = serviceMemberFields.some(field => sanitizedBody[field]);
+    
+        if (hasServiceMemberFields) {
+            return {
+                error: UserError.VALIDATION_ERR,
+                message: "Volunteer user should not have service member fields",
+                status: 400,
+            };
         }
     }
 
