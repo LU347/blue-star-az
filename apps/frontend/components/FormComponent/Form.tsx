@@ -4,6 +4,8 @@ import styles from './FormComponent.module.css';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react'; // 🔹 Import loader icon
 
+const API_URL = "http://localhost:3000/api" //process.env.NEXT_PUBLIC_PRODUCTION_API_URL; TEMP
+
 interface FormField {
     name: string;
     label: string;
@@ -25,10 +27,9 @@ interface FormComponentProps {
     linkText: string;
     linkHref: string;
     ariaLabel: string;
-    formData: Record<string, string>;
     pattern?: RegExp;
-    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-    onSubmit: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
     onSubmitSuccess?: (result: any) => void;
     onSubmitError?: (error: string) => void;
 }
@@ -42,48 +43,48 @@ const FormComponent: React.FC<FormComponentProps> = ({
     linkText,
     linkHref,
     ariaLabel,
-    formData,
-    onChange,
-    onSubmit,
     onSubmitSuccess,
     onSubmitError,
 }) => {
-    const [error, setError] = useState<string | null>(null);
+    /*
+        TODO: Use an API router on the frontend to abstract the backend implementation.
+        ex: app/api/login/route.ts
+    */
+    const [formData, setFormData] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false); // 🔹 Loading state
-    const apiUrl = process.env.NEXT_PUBLIC_PRODUCTION_API_URL;
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true); // 🔹 Start loading
-        const formData = new FormData(e.currentTarget);
-        const data = Object.fromEntries(formData);
-        
+
         try {
-            const response = await fetch(apiUrl + action, {
+            const response = await fetch(API_URL + action, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data),
+                body: JSON.stringify(formData),
             });
 
             const result = await response.json();
             if (!response.ok) {
-                const errorMsg = result.error || 'Submission failed';
-                setError(errorMsg);
+                const errorMsg = result.message;
                 if (onSubmitError) onSubmitError(errorMsg);
             } else {
-                setError(null);
                 if (onSubmitSuccess) onSubmitSuccess(result);
             }
         } catch (err) {
-            setError('An error occurred during submission');
             if (onSubmitError) onSubmitError('An error occurred during submission');
         } finally {
             setLoading(false); // 🔹 Stop loading
         }
     };
-}) => {  
+
     return (
         <div className={styles.formPage}>
             <h1 className="text-3xl font-semibold mb-6">{title}</h1>
@@ -100,7 +101,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     name={field.name}
                                     aria-labelledby={field.ariaLabel}
                                     defaultValue=""
-                                    onChange={onChange}
+                                    onChange={handleChange}
                                 >
                                     <option value="">{field.placeholder}</option>
                                     {
@@ -116,7 +117,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     placeholder={field.placeholder}
                                     aria-labelledby={field.ariaLabel}
                                     value={formData[field.name] || ""}
-                                    onChange={onChange}
+                                    onChange={handleChange}
                                     pattern={field.pattern?.source}
                                     title={field.title}
                                     required={field.required}

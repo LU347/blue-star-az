@@ -16,7 +16,6 @@ interface SignupBody extends CreateUserRequest {
 export async function POST(req: Request) {
     try {
         const body = await req.json() as SignupBody;
-
         const requiredFields = ["email", "password", "phoneNumber", "firstName", "lastName", "gender", "branch"];
         const missingFields = requiredFields.filter(field => !body[field as keyof SignupBody]);
         if (missingFields.length > 0) {
@@ -64,6 +63,7 @@ export async function POST(req: Request) {
         const data = await response.json();
 
         if (!response.ok) {
+            console.log(data.error);
             return NextResponse.json({ message: data.error }, { status: response.status });
         }
 

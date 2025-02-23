@@ -44,6 +44,7 @@ const Login: React.FC = () => {
     const handleLoginError = (error: string) => {
         toast.error(error);
     };
+
     return (
         <div className="flex flex-col items-center justify-center h-screen">
             <FormComponent
