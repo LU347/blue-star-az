@@ -21,30 +21,3 @@ export enum Status {
     LOGIN_SUCCESS = "User logged in successfully!",
     LOGOUT_SUCCESS = "User logged out successfully!"
 }
-
-export interface ServiceMember {
-    userId: number;
-    addressLineOne: string;
-    addressLineTwo?: string;
-    branch: Branch;
-    country?: string;
-    state?: string;
-    zipCode?: string;
-}
-
-export interface CreateUserRequest {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-    userType: UserType;
-    gender: Gender;
-    branch: Branch;
-    addressLineOne?: string;
-    addressLineTwo?: string;
-    city?: string;
-    country?: string;
-    state?: string;     
-    zipCode?: string;   
-}
