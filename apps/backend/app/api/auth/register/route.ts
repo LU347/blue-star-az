@@ -5,7 +5,8 @@ import validator, { escape as escapeHtml } from "validator";
 
 import { Prisma, Gender, PrismaClient, UserType, Branch } from "@prisma/client";
 
-import { UserError, Status, CreateUserRequest } from "app/types/enums";
+import { UserError, Status } from "app/types/enums";
+import { UserFields, ServiceMemberFields, RegisterUserRequest } from "app/types/interfaces";
 
 // Extend the global object to include an optional Prisma client instance
 const prismaGlobal = global as typeof global & {
@@ -33,7 +34,7 @@ function sanitizeInput(input: string): string {
     return "";
 }
 
-function isCreateUserRequest(obj: any): obj is CreateUserRequest {
+function isCreateUserRequest(obj: any): obj is RegisterUserRequest {
     return typeof obj === "object" && obj !== null;
 }
 
@@ -49,66 +50,80 @@ function isCreateUserRequest(obj: any): obj is CreateUserRequest {
  * @param body - The raw user registration input.
  * @returns A sanitized version of the user registration input.
  */
-function sanitizeBody(body: unknown): CreateUserRequest {
+function sanitizeBody(body: unknown): RegisterUserRequest {
     if (!isCreateUserRequest(body)) {
         throw new Error("Invalid body format");
     }
 
-    let sanitizedBody: CreateUserRequest = {
-        ...body as CreateUserRequest,
-        email: sanitizeInput(body.email)?.toLowerCase() || "",
-        password: sanitizeInput(body.password),
-        firstName: sanitizeInput(body.firstName),
-        lastName: sanitizeInput(body.lastName),
-        phoneNumber: sanitizeInput(body.phoneNumber),
-        gender: sanitizeInput(body.gender) as Gender,
-        userType: sanitizeInput(body.userType) as UserType,
-        branch: sanitizeInput(body.branch) as Branch,
-    };
+    let userBody: UserFields = {
+        email: "",
+        password: "",
+        firstName: "",
+        lastName: "",
+        phoneNumber: "",
+        gender: "MALE",
+        userType: "SERVICE_MEMBER",
+    }
 
-    /*
-        Currently, I am manually checking each optional field for presence and sanitizing it. 
-        I attempted to refactor this by iterating through a list of optional fields but encountered a 
-        "type string is not assignable to type never" error, which I could not resolve in time.
-    
-        For now, I'm leaving the implementation as it is, but I plan to refactor this to use an 
-        array of optional fields for better scalability and maintainability once I have more time to 
-        address the type issues.
+    const userFields: (keyof UserFields)[] = [
+        "email",
+        "password",
+        "firstName",
+        "lastName",
+        "phoneNumber",
+    ] as const;
 
-        I believe the root cause of this issue lies in how I'm defining my interface (CreateUserRequest). 
-        I think I need to separate the optional and required fields into two distinct interfaces and then 
-        create another interface that merges them. This should help clarify the structure and resolve the 
-        typing issues I'm encountering.
 
-        Refactor attempt:
-        const optionalFields: (keyof CreateUserRequest)[] = ["addressLineOne", "addressLineTwo", "country", "state", "city", "zipCode"];
-        for (const field of optionalFields) {
-            if (body[field]) {
-                sanitizedBody[field] = sanitizeInput(body[field]) || "";  //sanitizedBody[field] is getting a type string is not assignable to type never error
+    // This can be refactored again
+    for (const field of userFields) {
+        if (body[field] !== undefined) {
+            userBody[field] = sanitizeInput(body[field] as string)
+        }
+    }
+
+    if (body.userType === "VOLUNTEER") {
+        return {
+            ...userBody,
+            userType: userBody.userType as UserType
+        }
+    }
+
+    const serviceMemberBody: ServiceMemberFields = {
+        branch: "",
+        addressLineOne: "",
+        addressLineTwo: "",
+        country: "",
+        state: "",
+        city: "",
+        zipCode: ""
+    }
+
+    const serviceMemberFields: (keyof ServiceMemberFields)[] = [
+        "branch",
+        "addressLineOne",
+        "addressLineTwo",
+        "country",
+        "state",
+        "city",
+        "zipCode"
+    ] as const;
+
+    if (body.userType == "SERVICE_MEMBER") {
+        // This can be refactored again
+        for (const field of serviceMemberFields) {
+            if (body[field] !== undefined) {
+                serviceMemberBody[field] = sanitizeInput(body[field] as string)
             }
         }
-    */
 
-    if (body.addressLineOne) {
-        sanitizedBody.addressLineOne = sanitizeInput(body.addressLineOne) || "";
-    }
-    if (body.addressLineTwo) {
-        sanitizedBody.addressLineTwo = sanitizeInput(body.addressLineTwo) || "";
-    }
-    if (body.country) {
-        sanitizedBody.country = sanitizeInput(body.country) || "";
-    }
-    if (body.state) {
-        sanitizedBody.state = sanitizeInput(body.state) || "";
-    }
-    if (body.city) {
-        sanitizedBody.city = sanitizeInput(body.city) || "";
-    }
-    if (body.zipCode) {
-        sanitizedBody.zipCode = sanitizeInput(body.zipCode) || "";
+        return {
+            ...userBody,
+            ...serviceMemberBody,
+            userType: userBody.userType as UserType
+        }
     }
 
-    return sanitizedBody;
+    throw new Error("Error occurred when sanitizing fields");
 }
 
 /**
@@ -129,9 +144,10 @@ function sanitizeBody(body: unknown): CreateUserRequest {
  *
  * const isValid = isEnumValue(UserRole, "ADMIN"); // returns true
  */
-function isEnumValue<T extends { [key: string]: string | number }>(enumObj: T, value: T[keyof T]): boolean {
-    return Object.values(enumObj).includes(value);
+function isEnumValue<T extends Record<string, string>>(enumObj: T, value: string): value is T[keyof T] {
+    return Object.values(enumObj).includes(value as T[keyof T]);
 }
+
 
 /**
  * Validates user registration input.
@@ -185,8 +201,8 @@ function isPhoneNumberValid(number: string): boolean {
  * @param sanitizedBody - The sanitized input data for user registration.
  * @returns An error object with details ({ error, message, status }) if any validation fails, or null if the input is valid.
  */
-export function validateUserInput(sanitizedBody: CreateUserRequest) {
-    const requiredFields: (keyof CreateUserRequest)[] = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
+export function validateUserInput(sanitizedBody: RegisterUserRequest) {
+    const requiredFields: (keyof RegisterUserRequest)[] = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
     for (const field of requiredFields) {
         if (!sanitizedBody[field]) {
             return {
@@ -228,10 +244,11 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
     }
 
     // Ensures that the volunteer account does not contain any fields/values associated with a service member account.
-    if (sanitizedBody.userType === UserType.VOLUNTEER) {
-        const serviceMemberFields: (keyof CreateUserRequest)[] = ["addressLineOne", "addressLineTwo", "country", "state", "city", "zipCode"];
-        const hasServiceMemberFields = serviceMemberFields.some(field => sanitizedBody[field]);
-    
+    if (sanitizedBody.userType === "VOLUNTEER") {
+        const serviceMemberFields: (keyof ServiceMemberFields)[] = ["addressLineOne", "addressLineTwo", "country", "state", "city", "zipCode"];
+        const hasServiceMemberFields = serviceMemberFields.some(field =>
+            (sanitizedBody as Partial<ServiceMemberFields>)[field] !== undefined);
+
         if (hasServiceMemberFields) {
             return {
                 error: UserError.VALIDATION_ERR,
@@ -242,7 +259,7 @@ export function validateUserInput(sanitizedBody: CreateUserRequest) {
     }
 
     // Ensures that a service member accounst has the required branch field and a valid branch value
-    if (sanitizedBody.userType === UserType.SERVICE_MEMBER) {
+    if (sanitizedBody.userType === "SERVICE_MEMBER") {
         if (!sanitizedBody.branch) {
             return { error: UserError.MISSING_FIELDS, message: "Missing branch for service member", status: 400 };
         }
@@ -289,7 +306,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: validationError.message }, { status: validationError.status || 400 });
         }
 
-        const { firstName, lastName, email, password, phoneNumber, userType, gender, addressLineOne, addressLineTwo, branch, country, state, zipCode, city } = sanitizedBody;
+        const { firstName, lastName, email, password, phoneNumber, userType, gender, 
+            addressLineOne, addressLineTwo, branch, country, state, zipCode, city 
+        } = sanitizedBody as UserFields & ServiceMemberFields;
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
@@ -308,8 +327,8 @@ export async function POST(req: Request) {
                         email,
                         password: hashedPassword,
                         phoneNumber,
-                        userType,
-                        gender
+                        userType: userType as UserType,
+                        gender: gender as Gender
                     },
                 });
 

@@ -1,0 +1,28 @@
+
+export type UserType = "VOLUNTEER" | "SERVICE_MEMBER"; 
+export type Gender = "MALE" | "FEMALE";
+export type Branch = "ARMY" | "NAVY" | "AIR_FORCE" | "SPACE_FORCE" | "COAST_GUARD" | "NATIONAL_GUARD" | "MARINES";
+
+export interface UserFields {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    gender: string;
+    userType: string;
+}
+
+export interface ServiceMemberFields {
+    branch?: string;
+    addressLineOne?: string;
+    addressLineTwo?: string;
+    country?: string;
+    state?: string;
+    city?: string;
+    zipCode?: string;
+}
+
+export type RegisterUserRequest = 
+    | (UserFields & { userType: "VOLUNTEER" })
+    | (UserFields & ServiceMemberFields & { userType: "SERVICE_MEMBER" });
