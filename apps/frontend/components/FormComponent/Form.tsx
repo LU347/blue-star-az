@@ -4,7 +4,7 @@ import styles from './FormComponent.module.css';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react'; // 🔹 Import loader icon
 
-const API_URL = "http://localhost:3000/api" //process.env.NEXT_PUBLIC_PRODUCTION_API_URL; TEMP
+const API_URL = "http://localhost:3001/api/" //process.env.NEXT_PUBLIC_PRODUCTION_API_URL; TEMP
 
 interface FormField {
     name: string;
