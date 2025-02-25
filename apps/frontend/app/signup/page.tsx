@@ -26,7 +26,7 @@ const Signup: React.FC = () => {
         <div className="flex flex-col items-center justify-center h-auto m-8">
             <FormComponent
                 title="Create an Account"
-                action="/register"
+                action="register"
                 formName="signupForm"
                 fields={signupFields}
                 buttonText="Sign Up"

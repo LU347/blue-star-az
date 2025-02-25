@@ -15,3 +15,15 @@ export interface CreateUserRequest {
     state?: string;     
     zipCode?: string;        
 }
+
+export interface LoginUserRequest {
+    email: string;
+    password: string;
+}
+
+export interface LoginResponse {
+    message: string; 
+    data: {
+        token: string
+    };
+}

@@ -8,7 +8,6 @@ if (!process.env.DEV_REGISTER_API_URL) {
     throw new Error("ENV variable not configured properly");
 }
 const API_URL = process.env.DEV_REGISTER_API_URL;
-
 interface SignupBody extends CreateUserRequest {
     confirmPassword: string;
 }
