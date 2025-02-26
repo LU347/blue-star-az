@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-/*
-    Needs input validation and sanitation
-*/
-
 const prismaGlobal = global as typeof global & { 
     prisma?: PrismaClient
 }
@@ -13,39 +9,68 @@ export const prisma = prismaGlobal.prisma ?? new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query"] : [],
 });
 
+function validateAndSanitizeInput(body: any) {
+    const { itemName, description, categoryId } = body;
+    const errors = [];
+
+    if (!itemName || typeof itemName !== 'string' || itemName.trim() === '') {
+        errors.push("Item name is required and must be a non-empty string.");
+    }
+
+    if (description && typeof description !== 'string') {
+        errors.push("Description must be a string if provided.");
+    }
+
+    if (!categoryId || typeof categoryId !== 'number') {
+        errors.push("Category ID is required and must be a number.");
+    }
+
+    const sanitizedItemName = itemName.trim().replace(/'/g, "''");
+    const sanitizedDescription = description ? description.trim().replace(/'/g, "''") : null;
+
+    return {
+        errors,
+        sanitizedInput: {
+            itemName: sanitizedItemName,
+            description: sanitizedDescription,
+            categoryId
+        }
+    };
+}
+
 export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        const { name, description, category } = body;
+        const { errors, sanitizedInput } = validateAndSanitizeInput(body);
+        if (errors.length > 0) {
+            return NextResponse.json({ error: errors }, { status: 400 });
+        }
 
-        const existingItem = await prisma.item.findUnique({ where: { name }});
+        const { itemName, description, categoryId } = sanitizedInput;
+
+        const existingItem = await prisma.item.findUnique({ where: { itemName }});
         if (existingItem) {
             return NextResponse.json({ error: "Item already exists" }, { status: 400 });
         }
 
-        const result = await prisma.$transaction(async (prisma) => {
-            try {
-                const newItem = await prisma.item.create({
-                    data: {
-                        name,
-                        description,
-                        category
-                    },
-                })
+        const existingCategory = await prisma.category.findUnique({ where: { id: categoryId }});
+        if (!existingCategory) {
+            return NextResponse.json({ error: "Missing or invalid item category" }, { status: 400 });
+        }
 
-                return newItem;
-            } catch (error) {
-                return NextResponse.json({ error: "Error creating item" }, { status: 500 });
+        const newItem = await prisma.item.create({
+            data: {
+                itemName,
+                description,
+                category: { connect: { id: categoryId }}
             }
         });
 
-        if (result) {
-            return NextResponse.json(
-                { status: 'success', message: "Item successfully created!" },
-                { status: 201 }
-            )
-        }
+        return NextResponse.json(
+            { status: 'success', message: "Item successfully created!" },
+            { status: 201 }
+        )
     } catch (error) {
         return NextResponse.json({ error: "Item creation failed" }, { status: 500 })
     }
