@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import validator from "validator";
 
 const prismaGlobal = global as typeof global & { 
     prisma?: PrismaClient
@@ -13,11 +14,11 @@ function validateAndSanitizeInput(body: any) {
     const { itemName, description, categoryId } = body;
     const errors = [];
 
-    if (!itemName || typeof itemName !== 'string' || itemName.trim() === '') {
-        errors.push("Item name is required and must be a non-empty string.");
+    if (!itemName || typeof itemName !== 'string' || itemName.trim() === '' || !validator.matches(itemName, /^[A-Za-z]+$/)) {
+        errors.push("Item name is required and must be a valid string.");
     }
 
-    if (description && typeof description !== 'string') {
+    if (description && (typeof description !== 'string' || !validator.matches(description, /^[A-Za-z]+$/))) {
         errors.push("Description must be a string if provided.");
     }
 
