@@ -14,11 +14,11 @@ function validateAndSanitizeInput(body: any) {
     const { itemName, description, categoryId } = body;
     const errors = [];
 
-    if (!itemName || typeof itemName !== 'string' || itemName.trim() === '' || !validator.matches(itemName, /^[A-Za-z]+$/)) {
+    if (!itemName || typeof itemName !== 'string' || itemName.trim() === '' || !validator.matches(itemName, /^[A-Za-z\s\-\_]+$/)) {
         errors.push("Item name is required and must be a valid string.");
     }
 
-    if (description && (typeof description !== 'string' || !validator.matches(description, /^[A-Za-z]+$/))) {
+    if (description && (typeof description !== 'string' || !validator.matches(description, /^[\w\s.,!?'"-]+$/))) {
         errors.push("Description must be a string if provided.");
     }
 
