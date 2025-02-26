@@ -59,13 +59,15 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Missing or invalid item category" }, { status: 400 });
         }
 
-        const newItem = await prisma.item.create({
-            data: {
-                itemName,
-                description,
-                category: { connect: { id: categoryId }}
-            }
-        });
+        const result = await prisma.$transaction(async (prisma) => {
+            return await prisma.item.create({
+                data: {
+                    itemName,
+                    description,
+                    category: { connect: { id: categoryId }}
+                }
+            });
+        })
 
         return NextResponse.json(
             { status: 'success', message: "Item successfully created!" },
