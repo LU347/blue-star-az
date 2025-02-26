@@ -85,7 +85,7 @@ model Category {
 
 model Item {
   id           Int      @id @default(autoincrement())
-  name         String
+  name         String   @unique
   description  String?
   categoryId  Int
   createdAt    DateTime @default(now()) @map("created_at")
@@ -98,7 +98,7 @@ model Item {
 
 model Transaction {
   id               Int              @id @default(autoincrement())
-  itemId          Int
+  itemId           Int
   transaction_type TransactionTypes
   notes            String?
   quantity         Int
