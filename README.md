@@ -12,14 +12,14 @@ Frontend (Next.js)
 * Framework: Next.js
 * Language: TypeScript
 * UI Library: Material UI, Tailwind CSS
-* State Management: Context API
+* State Management: Context API 
 * Styling: CSS Modules, Styled Components
-* Data Fetching: Axios
+* Data Fetching: fetch
 
 Backend 
 * Framework: Next.js
 * Database: PostgreSQL
-* Authentication: NextAuth.js
+* Authentication: Basic Authentication w/ JWT
 * API: RESTful API using Next.js API routes
 
 Deploying with Turborepo & Vercel
