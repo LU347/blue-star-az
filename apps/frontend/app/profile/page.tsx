@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useToken from "@/hooks/useToken"; // Import the hook
 const Profile: React.FC = () => {
     const router = useRouter();
-    const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+    //const [user, setUser] = useState<{ name: string; email: string } | null>(null);
     const { token, isChecking } = useToken(); // Get token & check state
 
     useEffect(() => {

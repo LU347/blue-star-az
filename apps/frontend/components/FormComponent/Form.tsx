@@ -1,10 +1,12 @@
 "use client";
+
 import Link from 'next/link';
 import styles from './FormComponent.module.css';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react'; // 🔹 Import loader icon
+import { FormResponse } from '@/app/types/auth';
 
-const API_URL = "http://localhost:3001/api/" //process.env.NEXT_PUBLIC_PRODUCTION_API_URL; TEMP
+const API_URL = process.env.NEXT_PUBLIC_PRODUCTION_API_URL; 
 
 interface FormField {
     name: string;
@@ -30,7 +32,7 @@ interface FormComponentProps {
     pattern?: RegExp;
     onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
-    onSubmitSuccess?: (result: any) => void;
+    onSubmitSuccess?: (result: FormResponse) => void;
     onSubmitError?: (error: string) => void;
 }
 
@@ -73,13 +75,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
             const result = await response.json();
             if (!response.ok) {
-                const errorMsg = result.message;
-                if (onSubmitError) onSubmitError(errorMsg);
+                if (onSubmitError) onSubmitError(result.message);
             } else {
-                if (onSubmitSuccess) onSubmitSuccess(result);
+                if (onSubmitSuccess) onSubmitSuccess(result.message);
             }
-        } catch (err) {
-            if (onSubmitError) onSubmitError('An error occurred during submission');
+        } catch (error: unknown) {
+            const errorMessage = (error as Error).message || 'An error occurred during submission';
+            if (onSubmitError) onSubmitError(errorMessage);
         } finally {
             setLoading(false); // 🔹 Stop loading
         }

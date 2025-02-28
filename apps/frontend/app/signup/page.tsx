@@ -4,16 +4,13 @@ import FormComponent from "@/components/FormComponent/Form";
 import { signupFields } from "./fields";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import { FormResponse } from "../types/auth";
 
-interface SignupResponse {
-    message: string;
-    status: string;
-}
 
 const Signup: React.FC = () => {
     const router = useRouter();
 
-    const handleSignupSuccess = (result: SignupResponse) => {
+    const handleSignupSuccess = (result: FormResponse) => {
         toast.success(result.message, { autoClose: 2000 });
         setTimeout(() => router.push('/profile'), 500);
     }
