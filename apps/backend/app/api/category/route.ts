@@ -87,6 +87,7 @@ export async function POST(req: NextApiRequest) {
             { status: 'success', message: 'Category successfully created' },
             { status: 201 }
         );
+
     } catch (error) {
         return NextResponse.json({ error: 'Error occurred while creating category' }, { status: 500 })
     }
@@ -109,8 +110,57 @@ export async function PUT(req: Request, res: Response) {
             return NextResponse.json({ error: 'The category you are trying to update does not exist' }, { status: 404 })
         }
 
-        //TODO: update category name or description or both
+        const updateData = {
+            ...(categoryName && { categoryName }),
+            ...(description && { description }),
+        };
+
+        await prisma.category.update({
+            where: {
+                id: parseInt(id, 10),
+            },
+            data: updateData
+        });
+
+        return NextResponse.json(
+            { status: 'success', message: 'Category successfully updated' },
+            { status: 200 }
+        );
+        
     } catch (error) {
         return NextResponse.json({ error: 'Error updating category' }, { status: 500 });
+    }
+}
+
+// delete items w/ this category (?) if so, i need to add onDelete cascading or something
+export async function DELETE(req: Request, res: Response) {
+    try {
+        const body = await req.json();
+
+        const { id } = body;
+
+        //refactor
+        if (!id || typeof id !== 'string') {
+            return NextResponse.json({ error: 'Invalid ID provided' }, { status: 400 });
+        }
+
+        const categoryExists = await prisma.category.findUnique({ where: { id: parseInt(id, 10 )}});
+        if (!categoryExists) {
+            return NextResponse.json({ error: 'The category you are trying to delte does not exist' }, { status: 400});
+        }
+
+        await prisma.category.delete({
+            where: {
+                id: parseInt(id, 10)
+            },
+        });
+
+        return NextResponse.json(
+            { status: 'success', message: 'Category successfully deleted' },
+            { status: 200 }
+        );
+
+    } catch (error) {
+        return NextResponse.json({ error: 'Error occurred when deleting category'}, { status: 500 });
     }
 }
