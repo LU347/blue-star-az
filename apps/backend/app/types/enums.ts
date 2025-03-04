@@ -1,4 +1,3 @@
-import { UserType, Branch, Gender} from "@prisma/client";
 
 export enum UserError {
     INVALID_METHOD = "Invalid method",
