@@ -1,9 +1,11 @@
 "use client";
+
 import FormComponent from "@/components/FormComponent/Form";
 import { useRouter } from 'next/navigation'; // For redirect
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { LoginResponse } from "../types/auth";
+import { FormResponse } from "../types/auth";
+
 const Login: React.FC = () => {
     const loginFields = [
         {
@@ -25,13 +27,17 @@ const Login: React.FC = () => {
     ];
     const router = useRouter();
     const REDIRECT_DELAY = 500;
-    const handleLoginSuccess = (result: LoginResponse) => {
-        if (!result.data.token) {
-            throw new Error('Invalid login response: missing token');
+    
+    const handleLoginSuccess = (result: FormResponse) => {
+        if (result.data && result.data.token) {
+            const token = result.data.token
+            localStorage.setItem('token', token);
+            toast.success("Login successful! Redirecting...", { autoClose: 2000 });
+            setTimeout(() => router.push('/profile'), REDIRECT_DELAY);
+        } else {
+            console.error('Token not received');
+            toast.error("Error logging in, please try again", { autoClose: 2000 });
         }
-        localStorage.setItem('token', result.data.token);
-        toast.success("Login successful! Redirecting...", { autoClose: 2000 });
-        setTimeout(() => router.push('/profile'), REDIRECT_DELAY);
     };
     const handleLoginError = (error: string) => {
         toast.error(error);

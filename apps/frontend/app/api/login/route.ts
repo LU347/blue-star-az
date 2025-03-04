@@ -47,11 +47,11 @@ export async function POST(req: Request) {
         });
         const data = await response.json();
         if (!response.ok) {
-            console.log(data.error);
             return NextResponse.json({ message: data.error }, { status: response.status });
         }
         return NextResponse.json({ message: "Login successful", data }, { status: 200 });
     } catch (error) {
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+        const errorMessage = (error as Error).message || 'Internal Server Error';
+        return NextResponse.json({ message: errorMessage }, { status: 500 });
     }
 }

@@ -1,5 +1,12 @@
 import validator from "validator";
 
+<<<<<<< HEAD
+=======
+export function isBodyValid(body: unknown): body is Record<string, any> {
+    return typeof body === 'object' && body !== null && !Array.isArray(body);
+}
+
+>>>>>>> main
 //checks if id is an int
 export function isIDValid(id: string | number) {
     if (!id || typeof id == 'string') {
@@ -22,4 +29,36 @@ export function isEmpty(obj: unknown): boolean {
         return true
     }
     return false
+<<<<<<< HEAD
+=======
+}
+
+export function isEmailValid(email: string): boolean {
+    return validator.isEmail(email);
+}
+
+/*
+    Password format:
+    - Must have minimum 8 characters
+    - At least one uppercase English letter (A-Z)
+    - At least one lowercase English letter (a-z)
+    - At least one digit (0-9)
+    - At least one special character (#?!@$%^&*-)
+*/
+export function isPasswordValid(password: string): boolean {
+    return validator.isStrongPassword(password);
+}
+
+/*
+    Number format:
+    Basic international phone number validation without delimiters and optional plus sign
+    + xxxxxxxxxxx or xxxxxxxxxx
+*/
+export function isPhoneNumberValid(number: string): boolean {
+    return validator.isMobilePhone(number);
+}
+
+export function isEnumValue<T extends Record<string, string>>(enumObj: T, value: string): value is T[keyof T] {
+    return Object.values(enumObj).includes(value as T[keyof T]);
+>>>>>>> main
 }

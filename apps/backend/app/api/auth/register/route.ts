@@ -1,206 +1,23 @@
 import { NextResponse } from "next/server";
-
 import bcrypt from "bcryptjs";
-import validator, { escape as escapeHtml } from "validator";
-
 import { Prisma, Gender, PrismaClient, UserType, Branch } from "@prisma/client";
 
 import { UserError, Status } from "app/types/enums";
 import { UserFields, ServiceMemberFields, RegisterUserRequest } from "app/types/interfaces";
 
-// Extend the global object to include an optional Prisma client instance
+import { isEmailValid, isEnumValue, isPasswordValid, isPhoneNumberValid, isStringValid } from "app/util/validators";
+import { sanitizeBody } from "app/util/sanitizers";
+
 const prismaGlobal = global as typeof global & {
     prisma?: PrismaClient
 }
 
-/**
- * Initializes the Prisma Client.
- * - Reuses an existing Prisma instance if available (to prevent multiple connections in development).
- * - Creates a new Prisma Client instance if none exists.
- * - Enables query logging in development mode.
- */
 export const prisma = prismaGlobal.prisma ?? new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query"] : [],
 });
 
-// Store the Prisma instance globally in development to prevent multiple instances due to hot-reloading.
 if (process.env.NODE_ENV !== "production") prismaGlobal.prisma = prisma
 
-// This should remove nonalphanumeric characters and remove extra whitespace.
-function sanitizeInput(input: string): string {
-    if (input) {
-        return escapeHtml(input.trim());
-    }
-    return "";
-}
-
-function isCreateUserRequest(obj: any): obj is RegisterUserRequest {
-    return typeof obj === "object" && obj !== null;
-}
-
-/**
- * Sanitizes and normalizes a CreateUserRequest object.
- *
- * This function cleans string-based fields to mitigate security risks such as XSS by trimming whitespace
- * and escaping HTML characters. It converts the email to lowercase, sanitizes the password, first name,
- * last name, and phone number, and processes optional address and location fields (addressLineOne,
- * addressLineTwo, country, state, and city) only if they exist. Enum fields (gender, userType, branch)
- * are also cast to their respective types.
- *
- * @param body - The raw user registration input.
- * @returns A sanitized version of the user registration input.
- */
-function sanitizeBody(body: unknown): RegisterUserRequest {
-    if (!isCreateUserRequest(body)) {
-        throw new Error("Invalid body format");
-    }
-
-    let userBody: UserFields = {
-        email: "",
-        password: "",
-        firstName: "",
-        lastName: "",
-        phoneNumber: "",
-        gender: "MALE",
-        userType: "SERVICE_MEMBER",
-    }
-
-    const userFields: (keyof UserFields)[] = [
-        "email",
-        "password",
-        "firstName",
-        "lastName",
-        "phoneNumber",
-    ] as const;
-
-
-    // This can be refactored again
-    for (const field of userFields) {
-        if (body[field] !== undefined) {
-            userBody[field] = sanitizeInput(body[field] as string)
-        }
-    }
-
-    if (body.userType === "VOLUNTEER") {
-        return {
-            ...userBody,
-            userType: userBody.userType as UserType
-        }
-    }
-
-    const serviceMemberBody: ServiceMemberFields = {
-        branch: "",
-        addressLineOne: "",
-        addressLineTwo: "",
-        country: "",
-        state: "",
-        city: "",
-        zipCode: ""
-    }
-
-    const serviceMemberFields: (keyof ServiceMemberFields)[] = [
-        "branch",
-        "addressLineOne",
-        "addressLineTwo",
-        "country",
-        "state",
-        "city",
-        "zipCode"
-    ] as const;
-
-    if (body.userType == "SERVICE_MEMBER") {
-        // This can be refactored again
-        for (const field of serviceMemberFields) {
-            if (body[field] !== undefined) {
-                serviceMemberBody[field] = sanitizeInput(body[field] as string)
-            }
-        }
-
-        return {
-            ...userBody,
-            ...serviceMemberBody,
-            userType: userBody.userType as UserType
-        }
-    }
-
-    throw new Error("Error occurred when sanitizing fields");
-}
-
-/**
- * Determines if a specified value exists within the provided enum object's values.
- *
- * This function checks if the given value is one of the valid values defined in the enum
- * by converting the enum object to an array of its values and verifying if the value is included.
- *
- * @param enumObj - The enumeration object to inspect.
- * @param value - The value to verify as a member of the enum.
- * @returns True if the value exists in the enum, otherwise false.
- *
- * @example
- * enum UserRole {
- *   ADMIN = "ADMIN",
- *   GUEST = "GUEST"
- * }
- *
- * const isValid = isEnumValue(UserRole, "ADMIN"); // returns true
- */
-function isEnumValue<T extends Record<string, string>>(enumObj: T, value: string): value is T[keyof T] {
-    return Object.values(enumObj).includes(value as T[keyof T]);
-}
-
-
-/**
- * Validates user registration input.
- *
- * This function checks that the provided input object includes all required registration fields
- * (email, password, firstName, lastName, phoneNumber, and gender) and validates that the `userType`
- * and `gender` fields match their respective enum values. For volunteer users, it ensures that no
- * service member-specific fields (branch, addressLineOne, addressLineTwo, country, or state) are present.
- * For service members, it verifies that the `branch` field is provided and contains a valid enum value.
- *
- * @param body - The input object containing user registration details.
- * @returns Null if the validation passes; otherwise, an object with an `error` property indicating the type of error
- *          (e.g., missing fields or invalid type) along with an HTTP status code (typically 400).
- */
-function isEmailValid(email: string): boolean {
-    return validator.isEmail(email);
-}
-
-/*
-    Password format:
-    - Must have minimum 8 characters
-    - At least one uppercase English letter (A-Z)
-    - At least one lowercase English letter (a-z)
-    - At least one digit (0-9)
-    - At least one special character (#?!@$%^&*-)
-*/
-function isPasswordValid(password: string): boolean {
-    return validator.isStrongPassword(password);
-}
-
-/*
-    Number format:
-    Basic international phone number validation without delimiters and optional plus sign
-    + xxxxxxxxxxx or xxxxxxxxxx
-*/
-function isPhoneNumberValid(number: string): boolean {
-    return validator.isMobilePhone(number);
-}
-
-/**
- * Validates a sanitized user registration request.
- *
- * This function checks that all required fields are present and properly formatted. It verifies that:
- * - Mandatory fields (email, password, firstName, lastName, phoneNumber, gender) are provided.
- * - First and last names contain only alphabetical characters, spaces, apostrophes, or hyphens.
- * - The provided values for user type and gender match the expected enum values.
- * - Email, password, and phone number formats are valid.
- * - For volunteer users, no service member-specific fields (branch, addressLineOne, addressLineTwo, country, state) are present.
- * - For service members, a valid branch is provided.
- *
- * @param sanitizedBody - The sanitized input data for user registration.
- * @returns An error object with details ({ error, message, status }) if any validation fails, or null if the input is valid.
- */
 export function validateUserInput(sanitizedBody: RegisterUserRequest) {
     const requiredFields: (keyof RegisterUserRequest)[] = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
     for (const field of requiredFields) {
@@ -213,13 +30,10 @@ export function validateUserInput(sanitizedBody: RegisterUserRequest) {
         }
     }
 
-    // Validate first and last names
-    if (!validator.matches(sanitizedBody.firstName, /^[A-Za-z' -]+(?: [A-Za-z' -]+)*$/) ||
-        !validator.matches(sanitizedBody.lastName, /^[A-Za-z' -]+(?: [A-Za-z' -]+)*$/)) {
+    if (!isStringValid(sanitizedBody.firstName) || !isStringValid(sanitizedBody.lastName)) {
         return { error: UserError.VALIDATION_ERR, message: "Name contains non-alphabetical characters", status: 400 }
     }
 
-    // Validate enum values
     if (!isEnumValue(UserType, sanitizedBody.userType) || !isEnumValue(Gender, sanitizedBody.gender)) {
         return {
             error: UserError.INVALID_TYPE,
@@ -228,17 +42,14 @@ export function validateUserInput(sanitizedBody: RegisterUserRequest) {
         };
     }
 
-    // Validate email format
     if (!isEmailValid(sanitizedBody.email)) {
         return { error: UserError.VALIDATION_ERR, message: "Invalid email format", status: 400 };
     }
 
-    // Validate password strength
     if (!isPasswordValid(sanitizedBody.password)) {
         return { error: UserError.VALIDATION_ERR, message: "Invalid password format", status: 400 };
     }
 
-    // Validate phone number format
     if (!isPhoneNumberValid(sanitizedBody.phoneNumber)) {
         return { error: UserError.VALIDATION_ERR, message: "Invalid phone number format", status: 400 };
     }
@@ -269,37 +80,14 @@ export function validateUserInput(sanitizedBody: RegisterUserRequest) {
         }
     }
 
-    return null; // Validation passes
+    return null; 
 }
 
-/**
- * Processes a POST request to register a new user.
- *
- * This function handles user registration by performing the following operations:
- * - Parses the JSON body of the incoming request.
- * - Sanitizes and validates the user input. If validation fails, returns a JSON error response.
- * - Checks whether a user with the provided email already exists, returning an error if one is found.
- * - Hashes the user's password using bcrypt.
- * - Creates a new user record in the database.
- * - If the user is a service member, creates an associated record with additional details—such as address lines, branch, country, state, zip code, and city if provided.
- * - Catches errors from database operations (e.g., duplicate email) and general exceptions, returning appropriate JSON responses.
- *
- * @param req - The incoming request containing registration details in its JSON body.
- * @returns A JSON response indicating either successful registration with a 201 status code or an error message with the corresponding status code.
- *
- * @example
- * const response = await POST(request);
- * if (response.status === 201) {
- *   // Registration succeeded.
- * } else {
- *   // Handle registration error.
- * }
- */
 export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        const sanitizedBody = sanitizeBody(body);
+        const sanitizedBody = sanitizeBody(body) as RegisterUserRequest;
 
         const validationError = validateUserInput(sanitizedBody);
         if (validationError) {
@@ -318,40 +106,34 @@ export async function POST(req: Request) {
         const HASH_ROUNDS = process.env.HASH_ROUNDS ? parseInt(process.env.HASH_ROUNDS) : 12;
         const hashedPassword = await bcrypt.hash(password, HASH_ROUNDS);
 
-        const result = await prisma.$transaction(async (prisma) => {
-            try {
-                const newUser = await prisma.user.create({
-                    data: {
-                        firstName,
-                        lastName,
-                        email,
-                        password: hashedPassword,
-                        phoneNumber,
-                        userType: userType as UserType,
-                        gender: gender as Gender
-                    },
+        await prisma.$transaction(async (prisma) => {
+            const newUser = await prisma.user.create({
+                data: {
+                    firstName,
+                    lastName,
+                    email,
+                    password: hashedPassword,
+                    phoneNumber,
+                    userType: userType as UserType,
+                    gender: gender as Gender
+                },
+            });
+
+            if (userType === UserType.SERVICE_MEMBER) {
+                const serviceMemberData: any = {
+                    userId: newUser.id,
+                    ...(addressLineOne && { addressLineOne: addressLineOne }),
+                    ...(addressLineTwo && { addressLineTwo: addressLineTwo }),
+                    ...(branch && { branch: branch }),
+                    ...(country && { country: country }),
+                    ...(state && { state: state }),
+                    ...(zipCode && { zipCode: zipCode }),
+                    ...(city && { city: city })
+                };
+
+                await prisma.serviceMember.create({
+                    data: serviceMemberData,
                 });
-
-                if (userType === UserType.SERVICE_MEMBER) {
-                    const serviceMemberData: any = {
-                        userId: newUser.id,
-                        ...(addressLineOne && { addressLineOne: addressLineOne }),
-                        ...(addressLineTwo && { addressLineTwo: addressLineTwo }),
-                        ...(branch && { branch: branch }),
-                        ...(country && { country: country }),
-                        ...(state && { state: state }),
-                        ...(zipCode && { zipCode: zipCode }),
-                        ...(city && { city: city })
-                    };
-
-                    await prisma.serviceMember.create({
-                        data: serviceMemberData,
-                    });
-                }
-
-                return newUser;
-            } catch (error) {
-                throw error;
             }
         });
 

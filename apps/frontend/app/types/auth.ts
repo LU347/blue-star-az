@@ -21,9 +21,10 @@ export interface LoginUserRequest {
     password: string;
 }
 
-export interface LoginResponse {
-    message: string; 
-    data: {
-        token: string
+export interface FormResponse {
+    message: string;
+    data?: {
+        token?: string
     };
+    status?: string
 }
