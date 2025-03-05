@@ -12,13 +12,13 @@ const prismaGlobal = global as typeof global & {
     prisma?: PrismaClient
 }
 
-export const prisma = prismaGlobal.prisma ?? new PrismaClient({
+const prisma = prismaGlobal.prisma ?? new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query"] : [],
 });
 
 if (process.env.NODE_ENV !== "production") prismaGlobal.prisma = prisma
 
-export function validateUserInput(sanitizedBody: RegisterUserRequest) {
+function validateUserInput(sanitizedBody: RegisterUserRequest) {
     const requiredFields: (keyof RegisterUserRequest)[] = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
     for (const field of requiredFields) {
         if (!sanitizedBody[field]) {
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        const sanitizedBody = sanitizeBody(body) as RegisterUserRequest;
+        const sanitizedBody = sanitizeBody(body) as unknown as RegisterUserRequest;
 
         const validationError = validateUserInput(sanitizedBody);
         if (validationError) {
@@ -120,17 +120,17 @@ export async function POST(req: Request) {
             });
 
             if (userType === UserType.SERVICE_MEMBER) {
-                const serviceMemberData: any = {
-                    userId: newUser.id,
-                    ...(addressLineOne && { addressLineOne: addressLineOne }),
-                    ...(addressLineTwo && { addressLineTwo: addressLineTwo }),
-                    ...(branch && { branch: branch }),
-                    ...(country && { country: country }),
-                    ...(state && { state: state }),
-                    ...(zipCode && { zipCode: zipCode }),
-                    ...(city && { city: city })
+                const serviceMemberData: Prisma.ServiceMemberCreateInput = {
+                    user: { connect: { id: newUser.id } },
+                    addressLineOne: addressLineOne || null,
+                    addressLineTwo: addressLineTwo || null,
+                    branch: branch as Branch || null, 
+                    country: country || null,
+                    state: state || null,
+                    zipCode: zipCode || null,
+                    city: city || null,
                 };
-
+        
                 await prisma.serviceMember.create({
                     data: serviceMemberData,
                 });

@@ -7,11 +7,11 @@ const prismaGlobal = global as typeof global & {
     prisma?: PrismaClient
 }
 
-export const prisma = prismaGlobal.prisma ?? new PrismaClient({
+const prisma = prismaGlobal.prisma ?? new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query"] : [],
 });
 
-export async function PUT(req: Request, res: Response) {
+export async function PUT(req: Request) {
     try {
         const body = await req.json();
 
