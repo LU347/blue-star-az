@@ -50,19 +50,11 @@ export async function POST(req: Request) {
         }
         
         return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-            try {
-                await tx.tokenBlacklist.create({
-                    data: { token },
-                    select: { id: true }
-                });
-            } catch (error) {
-                if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                    if (error.code === "P2002") {
-                        return NextResponse.json({ message: Status.LOGOUT_SUCCESS }, { status: 200 });
-                    }
-                }
-                throw error;
-            }
+            await tx.tokenBlacklist.create({
+                data: { token },
+                select: { id: true }
+            });
+
             return NextResponse.json({ message: Status.LOGOUT_SUCCESS }, { status: 200 });
         });
     } catch (error) {
