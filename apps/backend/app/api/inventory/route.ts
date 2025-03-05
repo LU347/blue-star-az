@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { isIDValid, isStringValid } from "app/util/validators";
+import { isStringValid } from "app/util/validators";
+import { sanitizeField } from "app/util/sanitizers";
 
 const prismaGlobal = global as typeof global & { 
     prisma?: PrismaClient
@@ -11,18 +12,18 @@ export const prisma = prismaGlobal.prisma ?? new PrismaClient({
 });
 
 function validateAndSanitizeInput(body: unknown) {
-    const { itemName, categoryId } = body as { itemName: string, categoryId: number};
+    const { itemName, categoryId } = body as { itemName: string; categoryId: number };
     const errors = [];
 
     if (!isStringValid(itemName)) {
         errors.push("Invalid item name")
     }
 
-    if (!isIDValid(categoryId)) {
-        errors.push("Invalid ID provided");
+    if (!categoryId || typeof categoryId !== 'number') {
+        errors.push("Category ID is required and must be a number.");
     }
 
-    const sanitizedItemName = itemName.trim().replace(/'/g, "''");
+    const sanitizedItemName = sanitizeField(itemName);
 
     return {
         errors,
@@ -51,7 +52,7 @@ export async function POST(req: Request) {
 
         const existingCategory = await prisma.category.findUnique({ where: { id: categoryId }});
         if (!existingCategory) {
-            return NextResponse.json({ error: "Missing or invalid item category" }, { status: 404 });
+            return NextResponse.json({ error: "Missing or invalid item category" }, { status: 400 });
         }
 
         await prisma.item.create({
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
         return NextResponse.json(
             { status: 'success', message: "Item successfully created!" },
             { status: 201 }
-        )
+        );
     } catch (error) {
         console.error(error);
         return NextResponse.json({ error: "Item creation failed" }, { status: 500 })
