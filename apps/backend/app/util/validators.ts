@@ -1,12 +1,9 @@
 import validator from "validator";
 
-<<<<<<< HEAD
-=======
 export function isBodyValid(body: unknown): body is Record<string, any> {
     return typeof body === 'object' && body !== null && !Array.isArray(body);
 }
 
->>>>>>> main
 //checks if id is an int
 export function isIDValid(id: string | number) {
     if (!id || typeof id == 'string') {
@@ -29,8 +26,6 @@ export function isEmpty(obj: unknown): boolean {
         return true
     }
     return false
-<<<<<<< HEAD
-=======
 }
 
 export function isEmailValid(email: string): boolean {
@@ -60,5 +55,4 @@ export function isPhoneNumberValid(number: string): boolean {
 
 export function isEnumValue<T extends Record<string, string>>(enumObj: T, value: string): value is T[keyof T] {
     return Object.values(enumObj).includes(value as T[keyof T]);
->>>>>>> main
 }
