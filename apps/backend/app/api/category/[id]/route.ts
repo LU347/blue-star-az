@@ -17,7 +17,7 @@ export async function PUT(req: Request, res: Response) {
 
         const { id, categoryName } = body;
 
-        if (!isIDValid(body)) {
+        if (!isIDValid(id)) {
             return NextResponse.json({ error: 'Invalid ID provided' }, { status: 400 });
         }
         const parsedId = parseInt(id, 10);
