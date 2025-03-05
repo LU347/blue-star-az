@@ -15,11 +15,7 @@ export const prisma = prismaGlobal.prisma ?? new PrismaClient({
 //get category by id, get category by query, and get all categories
 export async function GET(req: NextApiRequest) {
     try {
-        if (!req.url) {
-            return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
-        }
-
-        const { searchParams } = new URL(req.url);
+        const { searchParams } = new URL(req.url as string);
         const search = searchParams.get('search');
 
         let categoriesFound;
@@ -43,34 +39,33 @@ export async function GET(req: NextApiRequest) {
             categoriesFound = await prisma.category.findMany();
         }
 
-        let statusMessage = '';
         if (isEmpty(categoriesFound)) {
-            statusMessage = 'No categories found'
-        } else {
-            statusMessage = 'Categories found'
+            return NextResponse.json(
+                { status: 'error', message: 'No categories found' },
+                { status: 404 }
+            )
         }
 
         return NextResponse.json(
-            { status: 'success', message: statusMessage, data: categoriesFound},
+            { status: 'success', message: 'Categories found', data: categoriesFound},
             { status: 200 }
-        )
-
+        );
+        
     } catch (error) {
-        return NextResponse.json({ error: 'Error occurred while searching for category' }, { status: 500 });
+        console.error('Category search error:', error);
+        return NextResponse.json({ 
+            error: 'Error occurred while searching for category',
+            details: process.env.NODE_ENV === 'development' ? String(error) : undefined
+        }, { status: 500 });
     }
 }
 
 //create category
-export async function POST(req: NextApiRequest) {
+export async function POST(req: Request) {
     try {
-        if (!req.url) {
-            return NextResponse.json({ error: 'Invalid Request' }, { status: 400 });
-        }
+        const body = await req.json();
 
-        const { searchParams } = new URL(req.url);
-
-        const categoryName = searchParams.get('categoryName');
-
+        const { categoryName } = body;
         if (!categoryName) {
             return NextResponse.json({ error: 'Missing category name' }, { status: 400 });
         }
@@ -88,14 +83,16 @@ export async function POST(req: NextApiRequest) {
             return NextResponse.json({ error: 'Category already exists' }, { status: 400 });
         }
 
-        await prisma.category.create({
-            data: {
-                categoryName,
-            },
+        const newCategory = await prisma.$transaction(async (tx) => {
+            return tx.category.create({
+                data: {
+                    categoryName,
+                },
+            });
         });
 
         return NextResponse.json(
-            { status: 'success', message: 'Category successfully created' },
+            { status: 'success', message: 'Category successfully created', data: newCategory },
             { status: 201 }
         );
 
