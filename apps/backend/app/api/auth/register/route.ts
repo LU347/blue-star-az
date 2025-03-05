@@ -106,8 +106,8 @@ export async function POST(req: Request) {
         const HASH_ROUNDS = process.env.HASH_ROUNDS ? parseInt(process.env.HASH_ROUNDS) : 12;
         const hashedPassword = await bcrypt.hash(password, HASH_ROUNDS);
 
-        await prisma.$transaction(async (prisma) => {
-            const newUser = await prisma.user.create({
+        await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+            const newUser = await tx.user.create({
                 data: {
                     firstName,
                     lastName,
@@ -131,7 +131,7 @@ export async function POST(req: Request) {
                     city: city || null,
                 };
         
-                await prisma.serviceMember.create({
+                await tx.serviceMember.create({
                     data: serviceMemberData,
                 });
             }
