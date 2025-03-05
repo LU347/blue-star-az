@@ -1,7 +1,7 @@
 
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { isStringValid, isEmpty } from 'app/util/validators';
 
 const prismaGlobal = global as typeof global & { 
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Category already exists' }, { status: 400 });
         }
 
-        const newCategory = await prisma.$transaction(async (tx) => {
+        const newCategory = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             return tx.category.create({
                 data: {
                     categoryName,
