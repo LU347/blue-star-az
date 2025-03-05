@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import validator from "validator";
+import { isStringValid } from "app/util/validators";
+import { sanitizeField } from "app/util/sanitizers";
 
 const prismaGlobal = global as typeof global & { 
     prisma?: PrismaClient
@@ -10,26 +11,24 @@ export const prisma = prismaGlobal.prisma ?? new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query"] : [],
 });
 
-function validateAndSanitizeInput(body: any) {
-    const { itemName, description, categoryId } = body;
+function validateAndSanitizeInput(body: unknown) {
+    const { itemName, categoryId } = body as { itemName: string; categoryId: number };
     const errors = [];
 
-    if (!itemName || typeof itemName !== 'string' || itemName.trim() === '' || !validator.matches(itemName, /^[A-Za-z\s\-\_]+$/)) {
-        errors.push("Item name is required and must be a valid string.");
+    if (!isStringValid(itemName)) {
+        errors.push("Invalid item name")
     }
 
     if (!categoryId || typeof categoryId !== 'number') {
         errors.push("Category ID is required and must be a number.");
     }
 
-    const sanitizedItemName = itemName.trim().replace(/'/g, "''");
-    const sanitizedDescription = description ? description.trim().replace(/'/g, "''") : null;
+    const sanitizedItemName = sanitizeField(itemName);
 
     return {
         errors,
         sanitizedInput: {
             itemName: sanitizedItemName,
-            description: sanitizedDescription,
             categoryId
         }
     };
@@ -56,7 +55,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Missing or invalid item category" }, { status: 400 });
         }
 
-        const newItem = await prisma.item.create({
+        await prisma.item.create({
             data: {
                 itemName,
                 category: { connect: { id: categoryId }}
@@ -66,8 +65,9 @@ export async function POST(req: Request) {
         return NextResponse.json(
             { status: 'success', message: "Item successfully created!" },
             { status: 201 }
-        )
+        );
     } catch (error) {
+        console.error(error);
         return NextResponse.json({ error: "Item creation failed" }, { status: 500 })
     }
 }

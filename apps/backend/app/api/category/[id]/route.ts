@@ -1,7 +1,7 @@
 //Get by ID, PUT, DELETE
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { isIDValid } from "app/util/validators";
+import { isIDValid, isStringValid } from "app/util/validators";
 
 const prismaGlobal = global as typeof global & {
     prisma?: PrismaClient
@@ -17,11 +17,14 @@ export async function PUT(req: Request, res: Response) {
 
         const { id, categoryName } = body;
 
-        if (!id || isNaN(parseInt(id, 10))) {
+        if (!isIDValid(body)) {
             return NextResponse.json({ error: 'Invalid ID provided' }, { status: 400 });
         }
-
         const parsedId = parseInt(id, 10);
+
+        if (!isStringValid(categoryName)) {
+            return NextResponse.json({ error: 'Missing or invalid category name' }, { status: 400 });
+        }
 
         const existingCategory = await prisma.category.findUnique({ where: { id: parsedId }});
         if (!existingCategory) {
@@ -30,7 +33,7 @@ export async function PUT(req: Request, res: Response) {
 
         await prisma.category.update({
             where: {
-                id: parseInt(id, 10),
+                id: parsedId,
             },
             data: {
                 categoryName: categoryName
@@ -43,30 +46,34 @@ export async function PUT(req: Request, res: Response) {
         );
         
     } catch (error) {
+        console.error('Error updating category:', error);
         return NextResponse.json({ error: 'Error updating category' }, { status: 500 });
     }
 }
 
-export async function DELETE(req: Request, res: Response) {
+export async function DELETE(req: Request) {
     try {
         const body = await req.json();
 
         const { id } = body;
 
-        const validationError = isIDValid(id); //replace with validateUserInput or it might be better to have three separate validator functions
-        if (validationError) {
-            return NextResponse.json({ error: validationError.error }, { status: 400 });
+        if (!isIDValid(id)) {
+            return NextResponse.json({ error: 'Invalid ID provided' }, { status: 400 });
         }
 
-        const categoryExists = await prisma.category.findUnique({ where: { id: parseInt(id, 10 )}});
+        const parsedInt = parseInt(id, 10);
+
+        const categoryExists = await prisma.category.findUnique({ where: { id: parsedInt }});
         if (!categoryExists) {
             return NextResponse.json({ error: 'The category you are trying to delete does not exist' }, { status: 404});
         }
 
-        await prisma.category.delete({
-            where: {
-                id: parseInt(id, 10)
-            },
+        await prisma.$transaction(async (tx) => {
+            return tx.category.delete({
+                where: {
+                    id: parsedInt
+                },
+            });
         });
 
         return NextResponse.json(
