@@ -40,16 +40,15 @@ export async function POST(req: Request) {
 
         try {
             jwt.verify(token, jwtSecret);
-        } catch (jwtError: any) {
-            if (jwtError.name === "TokenExpiredError") {
+        } catch (jwtError) {
+            if (jwtError instanceof jwt.TokenExpiredError) {
                 return NextResponse.json({ error: UserError.TOKEN_EXPIRED }, { status: 401 });
-            } else if (jwtError.name === "jsonWebTokenError") {
-                return NextResponse.json({ error: UserError.INVALID_TOKEN }, { status: 401});
+            } else if (jwtError instanceof jwt.JsonWebTokenError) {
+                return NextResponse.json({ error: UserError.INVALID_TOKEN }, { status: 401 });
             }
             return NextResponse.json({ error: UserError.INTERNAL_ERR }, { status: 500 });
         }
         
-
         return await prisma.$transaction(async (tx) => {
             try {
                 await tx.tokenBlacklist.create({
@@ -66,7 +65,8 @@ export async function POST(req: Request) {
             }
             return NextResponse.json({ message: Status.LOGOUT_SUCCESS }, { status: 200 });
         });
-    } catch (error: any) {
+    } catch (error) {
+        console.error(error);
         return NextResponse.json({ error: UserError.INTERNAL_ERR }, { status: 500 });
     }
 }

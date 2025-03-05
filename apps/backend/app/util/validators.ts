@@ -15,9 +15,9 @@ export function isIDValid(id: string | number) {
 //checks if string only consists of alphabetical characters and spaces
 export function isStringValid(str: string) {
     if (!str || !validator.matches(str, /^[ A-Za-z]+$/)) {
-        return { error: 'Invalid name or description provided' }
+        return false;
     }
-    return null;
+    return true;
 }
 
 //checks if an obj is empty, in this case, it checks if the query returned any rows of data

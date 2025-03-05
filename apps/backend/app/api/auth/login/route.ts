@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { UserError, Status } from "app/types/enums";
+import { isBodyValid, isEmailValid, isPasswordValid } from "app/util/validators";
 
 const prisma = new PrismaClient();
 
@@ -11,25 +12,6 @@ interface LoginRequestBody {
     password: string;
 }
 
-/**
- * Validates that the request body includes the required login fields.
- *
- * This function checks for the presence of the 'email' and 'password' properties in the provided body.
- * If either required field is missing, it returns an error object containing the appropriate error code
- * and a 400 HTTP status. If all required fields are present, it returns null.
- *
- * @param body - The request body to validate, expected to have 'email' and 'password' properties.
- * @returns An object with error and status properties if validation fails, otherwise null.
- */
-export function validateUserInput(body: any) {
-    const requiredFields: (keyof LoginRequestBody)[] = ['email', 'password'];
-    for (const field of requiredFields) {
-        if (!body[field] || body[field].length === 0) {                 //Checks if the field is missing or if the field is  empty
-            return { error: UserError.MISSING_FIELDS, status: 400 };
-        } 
-    }
-    return null;
-}
 /**
  * Handles user login via a POST request.
  *
@@ -53,13 +35,21 @@ export function validateUserInput(body: any) {
 export async function POST(req: Request) {
     try {
         const body: LoginRequestBody = await req.json();
-       
-        const validationError = validateUserInput(body);
-        if (validationError) {
-            return NextResponse.json(validationError, { status: validationError.status });
+
+        if (!isBodyValid(body)) {
+            return NextResponse.json({ error: 'Missing or invalid fields'}, { status: 400 });
         }
 
         const { email, password } = body;
+
+        if (!isEmailValid(email)) {
+            return NextResponse.json({ error: 'Missing or invalid email' }, { status: 400 });
+        }
+
+        if (!isPasswordValid(password)) {
+            return NextResponse.json({ error: 'Missing or invalid password' }, { status: 400 });
+        }
+        
         const user = await prisma.user.findUnique({
             where: { email },
         });
@@ -68,8 +58,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: UserError.USER_NONEXISTENT }, { status: 401 });
         }
 
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
+        const isPasswordMatching = await bcrypt.compare(password, user.password);
+        if (!isPasswordMatching) {
             return NextResponse.json({ error: UserError.INVALID_CREDENTIALS }, { status: 401 });
         }
 
