@@ -49,7 +49,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: UserError.INTERNAL_ERR }, { status: 500 });
         }
         
-        return await prisma.$transaction(async (tx) => {
+        return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             try {
                 await tx.tokenBlacklist.create({
                     data: { token },
