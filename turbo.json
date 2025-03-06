@@ -9,7 +9,8 @@
       "env": [
         "JWT_SECRET",
         "NODE_ENV",
-        "HASH_ROUNDS"
+        "HASH_ROUNDS",
+        "DATABASE_URL"
       ]
     },
     "lint": {
