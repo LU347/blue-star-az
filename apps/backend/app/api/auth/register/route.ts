@@ -12,13 +12,13 @@ const prismaGlobal = global as typeof global & {
     prisma?: PrismaClient
 }
 
-export const prisma = prismaGlobal.prisma ?? new PrismaClient({
+const prisma = prismaGlobal.prisma ?? new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query"] : [],
 });
 
 if (process.env.NODE_ENV !== "production") prismaGlobal.prisma = prisma
 
-export function validateUserInput(sanitizedBody: RegisterUserRequest) {
+function validateUserInput(sanitizedBody: RegisterUserRequest) {
     const requiredFields: (keyof RegisterUserRequest)[] = ['email', 'password', 'firstName', 'lastName', 'phoneNumber', 'gender'];
     for (const field of requiredFields) {
         if (!sanitizedBody[field]) {
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        const sanitizedBody = sanitizeBody(body) as RegisterUserRequest;
+        const sanitizedBody = sanitizeBody(body) as unknown as RegisterUserRequest;
 
         const validationError = validateUserInput(sanitizedBody);
         if (validationError) {
@@ -106,8 +106,8 @@ export async function POST(req: Request) {
         const HASH_ROUNDS = process.env.HASH_ROUNDS ? parseInt(process.env.HASH_ROUNDS) : 12;
         const hashedPassword = await bcrypt.hash(password, HASH_ROUNDS);
 
-        await prisma.$transaction(async (prisma) => {
-            const newUser = await prisma.user.create({
+        await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+            const newUser = await tx.user.create({
                 data: {
                     firstName,
                     lastName,
@@ -120,18 +120,18 @@ export async function POST(req: Request) {
             });
 
             if (userType === UserType.SERVICE_MEMBER) {
-                const serviceMemberData: any = {
-                    userId: newUser.id,
-                    ...(addressLineOne && { addressLineOne: addressLineOne }),
-                    ...(addressLineTwo && { addressLineTwo: addressLineTwo }),
-                    ...(branch && { branch: branch }),
-                    ...(country && { country: country }),
-                    ...(state && { state: state }),
-                    ...(zipCode && { zipCode: zipCode }),
-                    ...(city && { city: city })
+                const serviceMemberData: Prisma.ServiceMemberCreateInput = {
+                    user: { connect: { id: newUser.id } },
+                    addressLineOne: addressLineOne || null,
+                    addressLineTwo: addressLineTwo || null,
+                    branch: branch as Branch || null, 
+                    country: country || null,
+                    state: state || null,
+                    zipCode: zipCode || null,
+                    city: city || null,
                 };
-
-                await prisma.serviceMember.create({
+        
+                await tx.serviceMember.create({
                     data: serviceMemberData,
                 });
             }

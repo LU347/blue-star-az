@@ -7,7 +7,7 @@ const prismaGlobal = global as typeof global & {
     prisma?: PrismaClient
 }
 
-export const prisma = prismaGlobal.prisma ?? new PrismaClient({
+const prisma = prismaGlobal.prisma ?? new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query"] : [],
 });
 
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
         const { itemName, categoryId } = sanitizedInput;
 
-        const existingItem = await prisma.item.findUnique({ where: { itemName }});
+        const existingItem = await prisma.item.findUnique({ where: { itemName: itemName as string }});
         if (existingItem) {
             return NextResponse.json({ error: "Item already exists" }, { status: 400 });
         }
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
 
         await prisma.item.create({
             data: {
-                itemName,
+                itemName: itemName as string,
                 category: { connect: { id: categoryId }}
             }
         });

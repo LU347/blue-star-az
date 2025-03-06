@@ -3,10 +3,10 @@
 import { LoginUserRequest } from "../../types/auth"; 
 import { NextResponse } from "next/server";
 
-if (!process.env.DEV_LOGIN_API_URL) {
+if (!process.env.AUTH_URL) {
     throw new Error("ENV variable not configured properly");
 }
-const API_URL = process.env.DEV_LOGIN_API_URL;
+const API_URL = process.env.AUTH_URL;
 /**
  * Handles a POST request to log in a user.
  *

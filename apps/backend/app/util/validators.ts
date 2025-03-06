@@ -1,33 +1,28 @@
 import validator from "validator";
 
-export function isBodyValid(body: unknown): body is Record<string, any> {
+export function isBodyValid(body: unknown): body is Record<string, string | number | boolean | null> {
     return typeof body === 'object' && body !== null && !Array.isArray(body);
 }
 
-//checks if id is an int
-export function isIDValid(id: string | number) {
-    if (!id || typeof id == 'string') {
-        return { error: 'Invalid ID provided' }
+// Checks if ID is an integer
+export function isIDValid(id: string | number): { error: string } | null {
+    if (!id || (typeof id === 'string' && !validator.isInt(id))) {
+        return { error: 'Invalid ID provided' };
     }
     return null;
 }
 
-//checks if string only consists of alphabetical characters and spaces
-export function isStringValid(str: string) {
-    if (!str || !validator.matches(str, /^[ A-Za-z]+$/)) {
-        return { error: 'Invalid name or description provided' }
-    }
-    return null;
+// Checks if string only consists of alphabetical characters and spaces
+export function isStringValid(str: string): boolean {
+    return !!str && validator.matches(str, /^[ A-Za-z]+$/);
 }
 
-//checks if an obj is empty, in this case, it checks if the query returned any rows of data
+// Checks if an object is empty (useful for checking if a query returned any rows of data)
 export function isEmpty(obj: unknown): boolean {
-    if (!obj || Object.keys(obj).length === 0) {
-        return true
-    }
-    return false
+    return typeof obj !== 'object' || obj === null || Object.keys(obj).length === 0;
 }
 
+// Validates email format
 export function isEmailValid(email: string): boolean {
     return validator.isEmail(email);
 }
@@ -53,6 +48,7 @@ export function isPhoneNumberValid(number: string): boolean {
     return validator.isMobilePhone(number);
 }
 
+// Validates if a value exists within a given enum
 export function isEnumValue<T extends Record<string, string>>(enumObj: T, value: string): value is T[keyof T] {
     return Object.values(enumObj).includes(value as T[keyof T]);
 }

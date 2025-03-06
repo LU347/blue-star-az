@@ -1,19 +1,19 @@
 
-import { NextApiRequest } from 'next';
+import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { isStringValid, isEmpty } from 'app/util/validators';
 
 const prismaGlobal = global as typeof global & { 
     prisma?: PrismaClient
 }
 
-export const prisma = prismaGlobal.prisma ?? new PrismaClient({
+const prisma = prismaGlobal.prisma ?? new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query"] : [],
 });
 
 //get category by id, get category by query, and get all categories
-export async function GET(req: NextApiRequest) {
+export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url as string);
         const search = searchParams.get('search');
@@ -70,9 +70,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing category name' }, { status: 400 });
         }
 
-        const validationError = isStringValid(categoryName);
-        if (validationError) {
-            return NextResponse.json({ error: validationError.error }, { status: 400 })
+        if (!isStringValid(categoryName)) {
+            return NextResponse.json({ error: 'Invalid category name' }, { status: 400 });
         }
 
         const existingCategory = await prisma.category.findUnique({
@@ -83,7 +82,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Category already exists' }, { status: 400 });
         }
 
-        const newCategory = await prisma.$transaction(async (tx) => {
+        const newCategory = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             return tx.category.create({
                 data: {
                     categoryName,
@@ -97,6 +96,7 @@ export async function POST(req: Request) {
         );
 
     } catch (error) {
+        console.error(error);
         return NextResponse.json({ error: 'Error occurred while creating category' }, { status: 500 })
     }
 }

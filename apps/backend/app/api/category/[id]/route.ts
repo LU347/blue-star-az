@@ -1,17 +1,17 @@
 //Get by ID, PUT, DELETE
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { isIDValid, isStringValid } from "app/util/validators";
 
 const prismaGlobal = global as typeof global & {
     prisma?: PrismaClient
 }
 
-export const prisma = prismaGlobal.prisma ?? new PrismaClient({
+const prisma = prismaGlobal.prisma ?? new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query"] : [],
 });
 
-export async function PUT(req: Request, res: Response) {
+export async function PUT(req: Request) {
     try {
         const body = await req.json();
 
@@ -68,7 +68,7 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: 'The category you are trying to delete does not exist' }, { status: 404});
         }
 
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             return tx.category.delete({
                 where: {
                     id: parsedInt
