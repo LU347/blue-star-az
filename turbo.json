@@ -10,7 +10,8 @@
         "JWT_SECRET",
         "NODE_ENV",
         "HASH_ROUNDS",
-        "DATABASE_URL"
+        "DATABASE_URL",
+        "AUTH_URL"
       ]
     },
     "lint": {
