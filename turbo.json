@@ -11,7 +11,8 @@
         "NODE_ENV",
         "HASH_ROUNDS",
         "DATABASE_URL",
-        "AUTH_URL"
+        "AUTH_URL",
+        "API_KEY"
       ]
     },
     "lint": {
