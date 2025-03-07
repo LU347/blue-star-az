@@ -12,7 +12,9 @@
         "HASH_ROUNDS",
         "DATABASE_URL",
         "AUTH_URL",
-        "API_KEY"
+        "API_KEY",
+        "REGISTER_API_URL",
+        "LOGIN_API_URL"
       ]
     },
     "lint": {
