@@ -84,8 +84,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Item already exists" }, { status: 400 });
         }
 
-        const parsedCategoryId = parseInt(categoryId, 10);
-
+        const parsedCategoryId = typeof categoryId === 'string' ? parseInt(categoryId, 10) : categoryId;
         const existingCategory = await prisma.category.findUnique({ where: { id: parsedCategoryId }});
         if (!existingCategory) {
             return NextResponse.json({ error: "Missing or invalid item category" }, { status: 400 });
