@@ -34,7 +34,18 @@ export async function GET(req: Request) {
         }
 
         if (categoryId) {
-            whereConditions.categoryId = Number(categoryId); 
+            const parsedCategoryId = Number(categoryId);
+            if (isNaN(parsedCategoryId) || parsedCategoryId <= 0) {
+                return NextResponse.json({ error: 'Invalid category id' }, { status: 400 });
+            }
+
+            const categoryExists = await prisma.category.findUnique({
+                where: { id: parsedCategoryId }
+            });
+
+            if (!categoryExists) {
+                return NextResponse.json({ error: 'Category does not exist' }, { status: 404 });
+            }
         }
 
         const itemsFound = await prisma.item.findMany({
