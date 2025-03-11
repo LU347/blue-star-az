@@ -40,14 +40,11 @@ export async function GET(req: NextRequest) {
         }
 
         if (isEmpty(categoriesFound)) {
-            return NextResponse.json(
-                { status: 'error', message: 'No categories found' },
-                { status: 404 }
-            )
+            return NextResponse.json({ error: 'No categories found' }, { status: 404 });
         }
 
         return NextResponse.json(
-            { status: 'success', message: 'Categories found', data: categoriesFound},
+            { status: 'success', data: categoriesFound},
             { status: 200 }
         );
         

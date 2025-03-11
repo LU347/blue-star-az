@@ -25,3 +25,17 @@ export interface ServiceMemberFields {
 export type RegisterUserRequest = 
     | (UserFields & { userType: "VOLUNTEER" })
     | (UserFields & ServiceMemberFields & { userType: "SERVICE_MEMBER" });
+
+
+export interface WhereConditions {
+    itemName?: {
+        contains: string;
+        mode: 'insensitive';
+    };
+    categoryId?: number;
+}
+
+export interface UpdateData {
+    itemName?: string; 
+    categoryId?: number;
+}

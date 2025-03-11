@@ -1,4 +1,4 @@
-//Get by ID, PUT, DELETE
+//PUT, DELETE
 import { NextResponse } from "next/server";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { isStringValid } from "app/util/validators";
@@ -31,7 +31,7 @@ export async function PUT(req: Request, { params }: { params: { id: string }}) {
 
         const existingCategory = await prisma.category.findUnique({ where: { id: parsedId }});
         if (!existingCategory) {
-            return NextResponse.json({ error: 'The category you are trying to update does not exist' }, { status: 404 })
+            return NextResponse.json({ error: 'The category you are trying to update does not exist' }, { status: 404 });
         }
 
         await prisma.category.update({
