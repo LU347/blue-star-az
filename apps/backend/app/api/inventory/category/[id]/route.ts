@@ -1,7 +1,7 @@
 //Get by ID, PUT, DELETE
 import { NextResponse } from "next/server";
 import { Prisma, PrismaClient } from "@prisma/client";
-import { isIDValid, isStringValid } from "app/util/validators";
+import { isStringValid } from "app/util/validators";
 
 const prismaGlobal = global as typeof global & {
     prisma?: PrismaClient
@@ -11,16 +11,19 @@ const prisma = prismaGlobal.prisma ?? new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query"] : [],
 });
 
-export async function PUT(req: Request) {
+export async function PUT(req: Request, { params }: { params: { id: string }}) {
     try {
-        const body = await req.json();
-
-        const { id, categoryName } = body;
-
-        if (!isIDValid(id)) {
-            return NextResponse.json({ error: 'Invalid ID provided' }, { status: 400 });
+        if (!params || !params.id) {
+            return NextResponse.json({ error: 'ID parameter is missing' }, { status: 400 });
         }
-        const parsedId = parseInt(id, 10);
+
+        const parsedId = parseInt(params.id, 10);
+        if (isNaN(parsedId)) {
+            return NextResponse.json({ error: 'Invalid ID provided ' }, { status: 400 });
+        }
+
+        const body = await req.json();
+        const { categoryName } = body;
 
         if (!isStringValid(categoryName)) {
             return NextResponse.json({ error: 'Missing or invalid category name' }, { status: 400 });
@@ -51,19 +54,18 @@ export async function PUT(req: Request) {
     }
 }
 
-export async function DELETE(req: Request) {
+export async function DELETE(_req: Request, { params }: { params: { id: string }}) {
     try {
-        const body = await req.json();
-
-        const { id } = body;
-
-        if (!isIDValid(id)) {
-            return NextResponse.json({ error: 'Invalid ID provided' }, { status: 400 });
+        if (!params || !params.id) {
+            return NextResponse.json({ error: 'ID parameter is missing' }, { status: 400 });
         }
 
-        const parsedInt = parseInt(id, 10);
+        const parsedId = parseInt(params.id, 10);
+        if (isNaN(parsedId)) {
+            return NextResponse.json({ error: 'Invalid ID provided ' }, { status: 400 });
+        }
 
-        const categoryExists = await prisma.category.findUnique({ where: { id: parsedInt }});
+        const categoryExists = await prisma.category.findUnique({ where: { id: parsedId }});
         if (!categoryExists) {
             return NextResponse.json({ error: 'The category you are trying to delete does not exist' }, { status: 404});
         }
@@ -71,7 +73,7 @@ export async function DELETE(req: Request) {
         await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             return tx.category.delete({
                 where: {
-                    id: parsedInt
+                    id: parsedId
                 },
             });
         });
