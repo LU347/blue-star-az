@@ -24,7 +24,7 @@ export async function GET(req: Request) {
         }
 
         if (categoryId && isNaN(Number(categoryId))) {
-            return NextResponse.json({ error: 'Invalid category id' }, { status: 400 });
+            return NextResponse.json({ error: 'Invalid category ID' }, { status: 400 });
         }
 
         const whereConditions: WhereConditions = {};
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
         if (categoryId) {
             const parsedCategoryId = Number(categoryId);
             if (isNaN(parsedCategoryId) || parsedCategoryId <= 0) {
-                return NextResponse.json({ error: 'Invalid category id' }, { status: 400 });
+                return NextResponse.json({ error: 'Invalid category ID' }, { status: 400 });
             }
 
             const categoryExists = await prisma.category.findUnique({

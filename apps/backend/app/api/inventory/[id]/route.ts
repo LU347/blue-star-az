@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { isStringValid } from "app/util/validators";
+import { UpdateData } from "app/types/interfaces";
 
 const prismaGlobal = global as typeof global & {
     prisma?: PrismaClient
@@ -22,6 +23,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             return NextResponse.json({ error: 'Invalid item ID provided' }, { status: 400 });
         }
 
+        const existingItem = await prisma.item.findUnique({ where: { id: parsedId }});
+        if (!existingItem) {
+            return NextResponse.json({ error: 'The item you are trying to update does not exist' }, { status: 404 });
+        }
         const body = await req.json();
         const { newItemName, categoryId } = body;
 
@@ -44,7 +49,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             }
         }
 
-        const updateData: any = {};
+        const updateData: UpdateData = {};
         if (newItemName) updateData.itemName = newItemName;
         if (categoryId) updateData.categoryId = Number(categoryId);
 

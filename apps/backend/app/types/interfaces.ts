@@ -34,3 +34,8 @@ export interface WhereConditions {
     };
     categoryId?: number;
 }
+
+export interface UpdateData {
+    itemName?: string; 
+    categoryId?: number;
+}
