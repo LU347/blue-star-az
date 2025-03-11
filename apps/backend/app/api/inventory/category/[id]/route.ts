@@ -1,4 +1,4 @@
-//Get by ID, PUT, DELETE
+//PUT, DELETE
 import { NextResponse } from "next/server";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { isStringValid } from "app/util/validators";
