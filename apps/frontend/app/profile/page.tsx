@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react"; // Import React
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import useToken from "@/hooks/useToken";
 import {
@@ -13,21 +13,37 @@ import {
     DialogContent,
     DialogTitle,
     TextField,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel
 } from "@mui/material";
 
 interface UserProfile {
     firstName: string;
     lastName: string;
     phoneNumber: string;
-    address: string;
+    email: string;
+    branch: string;
+    gender: string;
+    addressLineOne?: string;
+    addressLineTwo?: string;
+    zipCode?: string;
+    city?: string;
+    country?: string;
 }
 
 const initialUserProfile: UserProfile = {
     firstName: "Test",
     lastName: "Account",
     phoneNumber: "1234567890",
-    address: "Test Address",
+    email: "",
+    branch: "",
+    gender: "",
 };
+
+const branchOptions = ["ARMY", "NAVY", "AIR_FORCE", "SPACE_FORCE", "COAST_GUARD", "NATIONAL_GUARD", "MARINES"];
+const genderOptions = ["MALE", "FEMALE"];
 
 const Profile: React.FC = () => {
     const router = useRouter();
@@ -37,7 +53,8 @@ const Profile: React.FC = () => {
     const [currentField, setCurrentField] = useState<keyof UserProfile | null>(null);
     const [newValue, setNewValue] = useState<string>("");
 
-    const fields: Array<keyof UserProfile> = ['firstName', 'lastName', 'phoneNumber', 'address'];
+    const accountFields: Array<keyof UserProfile> = ['firstName', 'lastName', 'phoneNumber', 'email'];
+    const personalFields: Array<keyof UserProfile> = ['branch', 'gender', 'addressLineOne', 'addressLineTwo', 'city', 'zipCode', 'country'];
 
     useEffect(() => {
         if (!isChecking && !token) {
@@ -46,12 +63,11 @@ const Profile: React.FC = () => {
     }, [token, isChecking, router]);
 
     if (isChecking) return <Typography align="center">Checking authentication...</Typography>;
-
     if (!token) return null;
 
     const handleEditClick = (field: keyof UserProfile) => {
         setCurrentField(field);
-        setNewValue(userProfile[field]);
+        setNewValue(userProfile[field] ?? "");
         setOpen(true);
     };
 
@@ -70,24 +86,26 @@ const Profile: React.FC = () => {
     };
 
     return (
-        <Container maxWidth="sm" sx={{ height: '100vh' }}>
-            <Box
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-                justifyContent="center"
-                sx={{ height: '100%', width: '100%' }} // Full height and width
-            >
-                {fields.map((field) => (
+        <Container maxWidth="md" sx={{ height: '100vh' }}>
+            <Box display="flex" flexDirection="column" alignItems="left" justifyContent="center" sx={{ height: '100%', width: '100%' }}>
+                <h1 className="my-4 text-2xl font-semibold">Account Info</h1>
+                <hr className="mb-8"></hr>
+                {accountFields.map((field) => (
                     <Box key={field} display="flex" justifyContent="space-between" alignItems="center" sx={{ width: '100%', marginY: 1 }}>
-                        <Typography variant="h6" sx={{ flex: 1, textAlign: 'center' }}>{field.charAt(0).toUpperCase() + field.slice(1)}</Typography>
-                        <Typography variant="body1" sx={{ flex: 1, textAlign: 'center' }}>{userProfile[field]}</Typography>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => handleEditClick(field)}
-                            sx={{ width: '100px', flexShrink: 0 }}
-                        >
+                        <Typography variant="h6" sx={{ flex: 1, textAlign: 'start' }}>{field.charAt(0).toUpperCase() + field.slice(1)}</Typography>
+                        <Typography variant="body1" sx={{ flex: 1, textAlign: 'start' }}>{userProfile[field]}</Typography>
+                        <Button variant="contained" color="primary" onClick={() => handleEditClick(field)} sx={{ width: '100px', flexShrink: 0 }}>
+                            Edit
+                        </Button>
+                    </Box>
+                ))}
+                <h1 className="my-4 text-2xl font-semibold">Personal</h1>
+                <hr className="mb-8"></hr>
+                {personalFields.map((field) => (
+                    <Box key={field} display="flex" justifyContent="space-between" alignItems="center" sx={{ width: '100%', marginY: 1 }}>
+                        <Typography variant="h6" sx={{ flex: 1, textAlign: 'start' }}>{field.charAt(0).toUpperCase() + field.slice(1)}</Typography>
+                        <Typography variant="body1" sx={{ flex: 1, textAlign: 'start' }}>{userProfile[field]}</Typography>
+                        <Button variant="contained" color="primary" onClick={() => handleEditClick(field)} sx={{ width: '100px', flexShrink: 0 }}>
                             Edit
                         </Button>
                     </Box>
@@ -97,16 +115,32 @@ const Profile: React.FC = () => {
             {/* Dialog for editing user profile */}
             <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Edit {currentField}</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        label={currentField}
-                        type="text"
-                        fullWidth
-                        value={newValue}
-                        onChange={(e) => setNewValue(e.target.value)}
-                    />
+                <DialogContent sx={{ width: "250px" }}>
+                    {currentField === "branch" || currentField === "gender" ? (
+                        <FormControl fullWidth margin="dense">
+                            <InputLabel>{currentField}</InputLabel>
+                            <Select
+                                value={newValue}
+                                onChange={(e) => setNewValue(e.target.value)}
+                            >
+                                {(currentField === "branch" ? branchOptions : genderOptions).map((option) => (
+                                    <MenuItem key={option} value={option}>
+                                        {option}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    ) : (
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            label={currentField}
+                            type="text"
+                            fullWidth
+                            value={newValue}
+                            onChange={(e) => setNewValue(e.target.value)}
+                        />
+                    )}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleClose} color="primary">
