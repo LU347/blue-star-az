@@ -22,6 +22,7 @@ export interface LoginUserRequest {
 }
 
 export interface FormResponse {
+    token: any;
     message: string;
     data?: {
         token?: string

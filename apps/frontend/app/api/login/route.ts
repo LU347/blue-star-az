@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 if (!process.env.AUTH_URL) {
     throw new Error("ENV variable not configured properly");
 }
-const API_URL = process.env.AUTH_URL;
+const API_URL = process.env.AUTH_URL + "/login";
 /**
  * Handles a POST request to log in a user.
  *
@@ -49,7 +49,10 @@ export async function POST(req: Request) {
         if (!response.ok) {
             return NextResponse.json({ message: data.error }, { status: response.status });
         }
-        return NextResponse.json({ message: "Login successful", data }, { status: 200 });
+        return NextResponse.json({
+            message: "Login successful",
+            token: data.token || null
+        }, { status: 200 });
     } catch (error) {
         const errorMessage = (error as Error).message || 'Internal Server Error';
         return NextResponse.json({ message: errorMessage }, { status: 500 });

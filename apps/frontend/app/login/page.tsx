@@ -29,8 +29,8 @@ const Login: React.FC = () => {
     const REDIRECT_DELAY = 500;
     
     const handleLoginSuccess = (result: FormResponse) => {
-        if (result.data && result.data.token) {
-            const token = result.data.token
+        if (result && result.token) {
+            const token = result.token
             localStorage.setItem('token', token);
             toast.success("Login successful! Redirecting...", { autoClose: 2000 });
             setTimeout(() => router.push('/profile'), REDIRECT_DELAY);
