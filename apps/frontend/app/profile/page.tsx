@@ -52,6 +52,17 @@ const Profile: React.FC = () => {
     const [open, setOpen] = useState(false);
     const [currentField, setCurrentField] = useState<keyof UserProfile | null>(null);
     const [newValue, setNewValue] = useState<string>("");
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const validateField = (field: keyof UserProfile, value: string) => {
+        if (field === 'email' && value && !/\S+@\S+\.\S+/.test(value)) {
+            return 'Invalid email format';
+        }
+        if (field === 'phoneNumber' && value && !/^\d{10}$/.test(value)) {
+            return 'Phone number must be 10 digits';
+        }
+        return '';
+    };
 
     const accountFields: Array<keyof UserProfile> = ['firstName', 'lastName', 'phoneNumber', 'email'];
     const personalFields: Array<keyof UserProfile> = ['branch', 'gender', 'addressLineOne', 'addressLineTwo', 'city', 'zipCode', 'country'];
