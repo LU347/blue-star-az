@@ -34,9 +34,9 @@ interface UserProfile {
 }
 
 const initialUserProfile: UserProfile = {
-    firstName: "Test",
-    lastName: "Account",
-    phoneNumber: "1234567890",
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
     email: "",
     branch: "",
     gender: "",
