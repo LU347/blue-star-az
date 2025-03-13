@@ -133,6 +133,7 @@ const Profile: React.FC = () => {
                             <Select
                                 value={newValue}
                                 onChange={(e) => setNewValue(e.target.value)}
+                                error={!!errors[currentField!]}
                             >
                                 {(currentField === "branch" ? branchOptions : genderOptions).map((option) => (
                                     <MenuItem key={option} value={option}>
@@ -140,6 +141,11 @@ const Profile: React.FC = () => {
                                     </MenuItem>
                                 ))}
                             </Select>
+                            {errors[currentField!] && (
+                                <Typography color="error" variant="caption">
+                                    {errors[currentField!]}
+                                </Typography>
+                            )}
                         </FormControl>
                     ) : (
                         <TextField
@@ -150,6 +156,8 @@ const Profile: React.FC = () => {
                             fullWidth
                             value={newValue}
                             onChange={(e) => setNewValue(e.target.value)}
+                            error={!!errors[currentField!]}
+                            helperText={errors[currentField!]}
                         />
                     )}
                 </DialogContent>
@@ -157,8 +165,12 @@ const Profile: React.FC = () => {
                     <Button onClick={handleClose} color="primary">
                         Cancel
                     </Button>
-                    <Button onClick={handleSave} color="primary">
-                        Save
+                    <Button 
+                        onClick={handleSave} 
+                        color="primary"
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? 'Saving...' : 'Save'}
                     </Button>
                 </DialogActions>
             </Dialog>
