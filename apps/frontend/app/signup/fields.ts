@@ -140,4 +140,12 @@ export const signupFields = [
         placeholder: "State / Province",
         ariaLabel: "state_label",
     },
+    {
+        name: "otp",
+        label: "One-Time-Passcode",
+        type: "input",
+        placeholder: "6-digit OTP Code",
+        ariaLabel: "otp_label",
+        display: "none"
+    }
 ];

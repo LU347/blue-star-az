@@ -18,6 +18,7 @@ interface FormField {
     required?: boolean;
     pattern?: RegExp;
     title?: string;
+    display?: string;
 }
 
 interface FormComponentProps {
@@ -93,7 +94,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             <form action={action} name={formName} className={styles.form} aria-label={ariaLabel} onSubmit={handleSubmit}>
                 {fields.map((field, index) => (
                     <div key={index} className={styles.formField}>
-                        <label htmlFor={field.name}>
+                        <label htmlFor={field.name} style={{ display: field.display || "block" }}>
                             {field.label}
                             {field.required && <span style={{ color: "red" }}> * </span>}
                         </label>
@@ -123,6 +124,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                     pattern={field.pattern?.source}
                                     title={field.title}
                                     required={field.required}
+                                    style={{ display: field.display || "block" }}
                                 />
                             )
                         }

@@ -8,6 +8,8 @@ import { UserFields, ServiceMemberFields, RegisterUserRequest } from "app/types/
 import { isEmailValid, isEnumValue, isPasswordValid, isPhoneNumberValid, isStringValid } from "app/util/validators";
 import { sanitizeBody } from "app/util/sanitizers";
 
+import { sendEmail } from "../../../service/emailService";
+
 const prismaGlobal = global as typeof global & {
     prisma?: PrismaClient
 }
@@ -80,7 +82,7 @@ function validateUserInput(sanitizedBody: RegisterUserRequest) {
         }
     }
 
-    return null; 
+    return null;
 }
 
 export async function POST(req: Request) {
@@ -94,8 +96,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: validationError.message }, { status: validationError.status || 400 });
         }
 
-        const { firstName, lastName, email, password, phoneNumber, userType, gender, 
-            addressLineOne, addressLineTwo, branch, country, state, zipCode, city 
+        const { firstName, lastName, email, password, phoneNumber, userType, gender,
+            addressLineOne, addressLineTwo, branch, country, state, zipCode, city
         } = sanitizedBody as UserFields & ServiceMemberFields;
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -105,6 +107,22 @@ export async function POST(req: Request) {
 
         const HASH_ROUNDS = process.env.HASH_ROUNDS ? parseInt(process.env.HASH_ROUNDS) : 12;
         const hashedPassword = await bcrypt.hash(password, HASH_ROUNDS);
+
+        //verify email
+        const generateOTP = (): string => {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        };
+
+        const otp = generateOTP;
+
+        (async () => {
+            try {
+                await sendEmail(email, "Your One Time Password", `Your one time password: ` + otp);
+                console.log("Email sent successfully!");
+            } catch (error) {
+                console.error("Failed to send email:", error);
+            }
+        })();
 
         await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             const newUser = await tx.user.create({
@@ -124,13 +142,13 @@ export async function POST(req: Request) {
                     user: { connect: { id: newUser.id } },
                     addressLineOne: addressLineOne || null,
                     addressLineTwo: addressLineTwo || null,
-                    branch: branch as Branch || null, 
+                    branch: branch as Branch || null,
                     country: country || null,
                     state: state || null,
                     zipCode: zipCode || null,
                     city: city || null,
                 };
-        
+
                 await tx.serviceMember.create({
                     data: serviceMemberData,
                 });
