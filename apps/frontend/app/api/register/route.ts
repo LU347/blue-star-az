@@ -4,15 +4,16 @@ import { CreateUserRequest } from "../../types/auth";
 
 import { NextResponse } from "next/server";
 
-if (!process.env.DEV_REGISTER_API_URL) {
+if (!process.env.API_URL) {
     throw new Error("ENV variable not configured properly");
 }
-const API_URL = process.env.DEV_REGISTER_API_URL;
+const API_URL = process.env.API_URL + "/api/auth/register";
 interface SignupBody extends CreateUserRequest {
     confirmPassword: string;
 }
 
 export async function POST(req: Request) {
+    console.log(API_URL);
     try {
         const body = await req.json() as SignupBody;
         const requiredFields = ["email", "password", "phoneNumber", "firstName", "lastName", "gender", "branch"];

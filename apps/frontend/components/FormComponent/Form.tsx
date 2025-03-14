@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react'; // 🔹 Import loader icon
 import { FormResponse } from '@/app/types/auth';
 
-const API_URL = process.env.NEXT_PUBLIC_PRODUCTION_API_URL; 
+let API_URL = "http://localhost:3000/api/"; 
 
 interface FormField {
     name: string;
@@ -76,9 +76,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
             const result = await response.json();
             if (!response.ok) {
-                if (onSubmitError) onSubmitError(result.message);
+                if (onSubmitError) onSubmitError(result);
             } else {
-                if (onSubmitSuccess) onSubmitSuccess(result.message);
+                if (onSubmitSuccess) onSubmitSuccess(result);
             }
         } catch (error: unknown) {
             const errorMessage = (error as Error).message || 'An error occurred during submission';
