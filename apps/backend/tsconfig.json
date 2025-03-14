@@ -4,7 +4,8 @@
     "baseUrl": ".",
     "paths": {
       "app/*": ["./app/*"],
-      "@types/*": ["app/types/*"]
+      "@types/*": ["app/types/*"],
+      "@/*": ["./*"]
     },
     "plugins": [
       {

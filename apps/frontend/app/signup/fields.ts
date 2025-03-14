@@ -149,3 +149,25 @@ export const signupFields = [
         display: "none"
     }
 ];
+
+export const emailField = [
+    { 
+        name: "email", 
+        label: "Email", 
+        type: "email", 
+        required: true,
+        placeholder: "Enter your email",
+        ariaLabel: "Email input field"
+    }
+];
+
+export const otpField = [
+    { 
+        name: "otp", 
+        label: "OTP", 
+        type: "text", 
+        required: true,
+        placeholder: "Enter the OTP sent to your email",
+        ariaLabel: "OTP input field"
+    }
+];

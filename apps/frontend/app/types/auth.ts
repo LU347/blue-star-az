@@ -28,4 +28,5 @@ export interface FormResponse {
         token?: string
     };
     status?: string
+    email?: string
 }

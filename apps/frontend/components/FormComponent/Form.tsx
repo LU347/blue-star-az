@@ -27,8 +27,8 @@ interface FormComponentProps {
     formName: string;
     fields: FormField[];
     buttonText: string;
-    linkText: string;
-    linkHref: string;
+    linkText?: string;
+    linkHref?: string;
     ariaLabel: string;
     pattern?: RegExp;
     onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
@@ -135,7 +135,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     {buttonText}
                 </button>
             </form>
-            <Link href={linkHref}>{linkText}</Link>
+            {linkHref && linkText && <Link href={linkHref}>{linkText}</Link>}
         </div>
     );
 };
