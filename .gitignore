@@ -27,6 +27,5 @@ yarn-error.log*
 dist/
 build/
 
-# prisma/migrations/
+/apps/backend/prisma/@prisma/
 
-# tailwind.config.js
