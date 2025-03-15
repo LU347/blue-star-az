@@ -1,11 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 generator client {
   provider = "prisma-client-js"
-  output = "@prisma/client"
 }
 
 datasource db {
@@ -13,43 +7,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id            Int            @id @default(autoincrement())
-  email         String         @unique
-  password      String
-  userType      UserType
-  gender        Gender
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-  firstName     String         @map("firstName")
-  lastName      String         @map("lastName")
-  phoneNumber   String?        @map("phoneNumber")
-  serviceMember ServiceMember? @relation("UserServiceMember")
-  volunteer     Volunteer?     @relation("UserVolunteer")
+model Category {
+  id           Int      @id @default(autoincrement())
+  created_at   DateTime @default(now())
+  updated_at   DateTime
+  categoryName String   @unique
+  Item         Item[]
+}
 
-  otp        String?  
-  otpExpires DateTime? 
+model Item {
+  id          Int           @id @default(autoincrement())
+  categoryId  Int
+  created_at  DateTime      @default(now())
+  updated_at  DateTime
+  itemName    String        @unique
+  Category    Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  Transaction Transaction[]
 }
 
 model ServiceMember {
   userId         Int      @id
   country        String?
   state          String?
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  created_at     DateTime @default(now())
+  updated_at     DateTime
   branch         Branch
   addressLineOne String?
   addressLineTwo String?
   zipCode        String?
   city           String?
-  user           User     @relation("UserServiceMember", fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Volunteer {
-  userId    Int      @id
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  user      User     @relation("UserVolunteer", fields: [userId], references: [id], onDelete: Cascade)
+  User           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model TokenBlacklist {
@@ -58,51 +45,36 @@ model TokenBlacklist {
   createdAt DateTime @default(now())
 }
 
-model Category {
-  id           Int      @id @default(autoincrement())
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-  categoryName String   @unique
-  items        Item[]
-}
-
-model Item {
-  id           Int           @id @default(autoincrement())
-  categoryId   Int
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
-  itemName     String        @unique
-  category     Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
-}
-
 model Transaction {
   id               Int              @id @default(autoincrement())
   itemId           Int
   transaction_type TransactionTypes
   notes            String?
   quantity         Int
-  createdAt        DateTime         @default(now()) @map("created_at")
-  item             Item             @relation(fields: [itemId], references: [id])
+  created_at       DateTime         @default(now())
+  Item             Item             @relation(fields: [itemId], references: [id])
 }
 
-model OTP {
-  id         String   @id @default(uuid())
-  email      String   @unique
-  otp        String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
+model User {
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  password      String
+  userType      UserType
+  gender        Gender
+  created_at    DateTime       @default(now())
+  updated_at    DateTime
+  firstName     String
+  lastName      String
+  phoneNumber   String?
+  ServiceMember ServiceMember?
+  Volunteer     Volunteer?
 }
 
-
-enum UserType {
-  SERVICE_MEMBER
-  VOLUNTEER
-}
-
-enum Gender {
-  MALE
-  FEMALE
+model Volunteer {
+  userId     Int      @id
+  created_at DateTime @default(now())
+  updated_at DateTime
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum Branch {
@@ -115,8 +87,18 @@ enum Branch {
   MARINES
 }
 
+enum Gender {
+  MALE
+  FEMALE
+}
+
 enum TransactionTypes {
   ADDITION
   REMOVAL
   UPDATE
+}
+
+enum UserType {
+  SERVICE_MEMBER
+  VOLUNTEER
 }
