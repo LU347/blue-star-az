@@ -33,7 +33,7 @@ interface FormComponentProps {
     pattern?: RegExp;
     onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
-    onSubmitSuccess?: (result: FormResponse) => void;
+    onSubmitSuccess?: (response: { result: FormResponse }) => void;
     onSubmitError?: (error: string) => void;
 }
 
@@ -74,12 +74,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 body: JSON.stringify(formData),
             });
 
-            const result = await response.json();
             if (!response.ok) {
-                if (onSubmitError) onSubmitError(result);
-            } else {
-                if (onSubmitSuccess) onSubmitSuccess(result);
+                const errorResult = await response.json();
+                if (onSubmitError) onSubmitError(errorResult);
+                return;
             }
+
+            const result = await response.json();
+            if (onSubmitSuccess) onSubmitSuccess(result);
         } catch (error: unknown) {
             const errorMessage = (error as Error).message || 'An error occurred during submission';
             if (onSubmitError) onSubmitError(errorMessage);

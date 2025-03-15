@@ -4,6 +4,7 @@ import { sendEmail } from "../../service/emailService";
 
 const prisma = new PrismaClient();
 
+// Function to generate OTP
 function generateOTP(length = 6) {
     const digits = '0123456789';
     let otp = '';
@@ -24,11 +25,27 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Email is required" }, { status: 400 });
         }
 
+        // Check if the user exists in the database
         const user = await prisma.user.findUnique({
             where: { email },
         });
 
+        if (user) {
+            return NextResponse.json({ error: "Email address taken" }, { status: 400 });
+        }
+
         const otp = generateOTP(6);
+        const expiresAt = new Date();
+        expiresAt.setMinutes(expiresAt.getMinutes() + 10); // OTP expires in 10 minutes
+
+        // Store OTP in the database temporarily
+        await prisma.oTP.create({
+            data: {
+                email,
+                otp,
+                expiresAt,
+            },
+        });
 
         try {
             // Send the OTP via email
@@ -39,12 +56,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Failed to send OTP email" }, { status: 500 });
         }
 
-        // Store OTP temporarily if needed (e.g., in the database or cache)
-        // For now, we are just sending a dummy response with the email existence
+        // Return the response after successfully sending OTP and storing it
         return NextResponse.json({
-            exists: !!user,
-            message: "OTP sent successfully to your email."
+            result: {
+                success: true,
+                message: "OTP sent successfully to your email.",
+                exists: !!user,
+                email: email
+            }
         });
+
     } catch (error) {
         console.error("Error checking email:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

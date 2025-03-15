@@ -12,7 +12,9 @@ const Signup: React.FC = () => {
     const [step, setStep] = useState<"email" | "otp" | "signup">("email");
     const [email, setEmail] = useState("");
 
-    const handleEmailSubmit = (result: FormResponse) => {
+    const handleEmailSubmit = (response: { result: FormResponse }) => {
+        const { result } = response;
+        
         if (!result.success) {
             toast.error(result.message);
             return;
@@ -28,7 +30,9 @@ const Signup: React.FC = () => {
         setStep("otp");
     };
 
-    const handleOtpSubmit = (result: FormResponse) => {
+    const handleOtpSubmit = (response: { result: FormResponse }) => {
+        const { result } = response;
+
         if (!result.success) {
             toast.error(result.message);
             return;
@@ -44,7 +48,9 @@ const Signup: React.FC = () => {
     };
     
 
-    const handleSignupSubmit = (result: FormResponse) => {
+    const handleSignupSubmit = (response: { result: FormResponse }) => {
+        const { result } = response;
+        
         if (!result.success) {
             toast.error(result.message);
             return;
