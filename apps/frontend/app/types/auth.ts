@@ -22,6 +22,8 @@ export interface LoginUserRequest {
 }
 
 export interface FormResponse {
+    otp: any;
+    success: any;
     token: any;
     message: string;
     data?: {
