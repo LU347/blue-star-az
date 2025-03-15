@@ -78,11 +78,12 @@ model Volunteer {
 }
 
 model OTP {
-  id         Int      @id @default(autoincrement())
-  email      String
-  otp        String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  otp       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
 }
 
 enum Branch {
