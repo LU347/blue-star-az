@@ -30,11 +30,21 @@ export async function POST(req: Request) {
 
         const otp = generateOTP(6);
 
-        if (!user) {
-            await sendEmail(email, "Your OTP Code: ", otp);
+        try {
+            // Send the OTP via email
+            await sendEmail(email, "Your One Time Password", `Your one-time password is: ${otp}`);
+            console.log("Email sent successfully!");
+        } catch (emailError) {
+            console.error("Failed to send email:", emailError);
+            return NextResponse.json({ error: "Failed to send OTP email" }, { status: 500 });
         }
 
-        return NextResponse.json({ exists: !!user });
+        // Store OTP temporarily if needed (e.g., in the database or cache)
+        // For now, we are just sending a dummy response with the email existence
+        return NextResponse.json({
+            exists: !!user,
+            message: "OTP sent successfully to your email."
+        });
     } catch (error) {
         console.error("Error checking email:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

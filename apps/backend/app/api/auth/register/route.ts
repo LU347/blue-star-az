@@ -139,20 +139,23 @@ export async function POST(req: Request) {
 
             if (userType === UserType.SERVICE_MEMBER) {
                 const serviceMemberData: Prisma.ServiceMemberCreateInput = {
-                    user: { connect: { id: newUser.id } },
+                    User: { connect: { id: newUser.id } }, // Correctly using the User relation to connect by ID
                     addressLineOne: addressLineOne || null,
                     addressLineTwo: addressLineTwo || null,
-                    branch: branch as Branch || null,
+                    branch: branch as Branch, // Ensure branch is valid
                     country: country || null,
                     state: state || null,
                     zipCode: zipCode || null,
                     city: city || null,
+                    updated_at: new Date()
                 };
-
+              
                 await tx.serviceMember.create({
-                    data: serviceMemberData,
+                  data: serviceMemberData,
                 });
-            }
+              }
+              
+              
         });
 
         return NextResponse.json(
