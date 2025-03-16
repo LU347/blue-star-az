@@ -92,6 +92,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
             }
 
             const result = await response.json();
+            console.log(result);
             if (onSubmitSuccess) onSubmitSuccess(result);
         } catch (error: unknown) {
             const errorMessage = (error as Error).message || 'An error occurred during submission';

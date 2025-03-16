@@ -145,19 +145,8 @@ export async function POST(req: Request) {
             { status: 201 }
         );
 
-    } catch (error: unknown) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            if (error.code === 'P2002') {
-                return NextResponse.json({ error: "Email already exists" }, { status: 409 });
-            }
-            return NextResponse.json({ error: "Database operation failed", message: error.message }, { status: 500 });
-        }
-        if (error instanceof Error) {
-            return NextResponse.json(
-                { error: error.message },
-                { status: 400 }
-            );
-        }
+    } catch (error) {
+        console.error(error);
         return NextResponse.json({ error: "Registration failed" }, { status: 500 });
     }
 }

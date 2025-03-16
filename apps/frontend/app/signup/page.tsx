@@ -49,17 +49,26 @@ const Signup: React.FC = () => {
         setStep("signup");
     };
     
-
     const handleSignupSubmit = (response: { result: FormResponse }) => {
         const { result } = response;
-
-        if (!result.success) {
-            toast.error(result.message);
+        console.log("Hello");
+        console.log(result);
+    
+        // Handle success response
+        if (result.status === 'success') {
+            toast.success(result.message, { autoClose: 2000 });
+            setTimeout(() => router.push("/profile"), 500);  // Navigate to profile after success
             return;
         }
     
-        toast.success(result.message, { autoClose: 2000 });
-        setTimeout(() => router.push("/profile"), 500);
+        // Handle error response from backend
+        if (result.error) {
+            toast.error(result.error);  // Show the error message received from backend
+            return;
+        }
+    
+        // Fallback in case the response structure is unexpected
+        toast.error("An unknown error occurred during signup.");
     };
 
     return (

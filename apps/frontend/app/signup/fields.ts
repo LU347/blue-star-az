@@ -15,16 +15,6 @@ const passPattern = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[
 const passTitle = "Password must at least be 8 characters long and include at least one uppercase later, one lowercase letter, one number, and one special character.";
 export const signupFields = [
     {
-        name: "email",
-        label: "Email Address",
-        type: "email",
-        placeholder: "Email Address",
-        ariaLabel: "email_address_label",
-        required: true,
-        pattern: emailPattern,
-        title: emailTitle
-    },
-    {
         name: "password",
         label: "Password",
         type: "password",
