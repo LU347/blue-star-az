@@ -11,7 +11,6 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Email and OTP are required" }, { status: 400 });
         }
 
-        // Check if the OTP exists for the given email
         const otpRecord = await prisma.oTP.findUnique({
             where: { email },
         });
@@ -23,11 +22,13 @@ export async function POST(req: Request) {
         // Check if the OTP has expired
         const currentTime = new Date();
         if (otpRecord.expiresAt < currentTime) {
+            console.log("expired");
             return NextResponse.json({ error: "OTP has expired" }, { status: 400 });
         }
 
         // Check if the provided OTP matches the stored OTP
         if (otpRecord.otp !== otp) {
+            console.log("doesn't match");
             return NextResponse.json({ error: "Invalid OTP" }, { status: 400 });
         }
 

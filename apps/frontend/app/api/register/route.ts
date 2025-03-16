@@ -4,20 +4,21 @@ import { CreateUserRequest } from "../../types/auth";
 
 import { NextResponse } from "next/server";
 
-if (!process.env.API_URL) {
+if (!process.env.BACKEND_URL) {
     throw new Error("ENV variable not configured properly");
 }
-const API_URL = process.env.API_URL + "/api/auth/register";
+const API_URL = process.env.BACKEND_URL
+
 interface SignupBody extends CreateUserRequest {
     confirmPassword: string;
 }
 
 export async function POST(req: Request) {
-    console.log(API_URL);
     try {
         const body = await req.json() as SignupBody;
         const requiredFields = ["email", "password", "phoneNumber", "firstName", "lastName", "gender", "branch"];
         const missingFields = requiredFields.filter(field => !body[field as keyof SignupBody]);
+
         if (missingFields.length > 0) {
             return NextResponse.json(
                 { message: `Missing required fields: ${missingFields.join(', ')}`},
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
             userType: "SERVICE_MEMBER", 
         };
 
-        const response = await fetch(API_URL, {
+        const response = await fetch(API_URL + "/auth/register", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

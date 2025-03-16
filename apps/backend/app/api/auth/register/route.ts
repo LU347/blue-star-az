@@ -108,22 +108,6 @@ export async function POST(req: Request) {
         const HASH_ROUNDS = process.env.HASH_ROUNDS ? parseInt(process.env.HASH_ROUNDS) : 12;
         const hashedPassword = await bcrypt.hash(password, HASH_ROUNDS);
 
-        //verify email
-        const generateOTP = (): string => {
-            return Math.floor(100000 + Math.random() * 900000).toString();
-        };
-
-        const otp = generateOTP;
-
-        (async () => {
-            try {
-                await sendEmail(email, "Your One Time Password", `Your one time password: ` + otp);
-                console.log("Email sent successfully!");
-            } catch (error) {
-                console.error("Failed to send email:", error);
-            }
-        })();
-
         await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             const newUser = await tx.user.create({
                 data: {
@@ -154,8 +138,6 @@ export async function POST(req: Request) {
                   data: serviceMemberData,
                 });
               }
-              
-              
         });
 
         return NextResponse.json(

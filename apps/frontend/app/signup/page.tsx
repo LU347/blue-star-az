@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import FormComponent from "@/components/FormComponent/Form";
 import { emailField, otpField, signupFields } from "./fields";
 import { useRouter } from "next/navigation";
@@ -26,9 +26,16 @@ const Signup: React.FC = () => {
         }
     
         setEmail(result.email);
+        console.log(email);
         toast.success(result.message, { autoClose: 2000 });
-        setStep("otp");
     };
+
+    // Use `useEffect` to transition to OTP step only after email is updated
+    useEffect(() => {
+        if (email && step === "email") {
+            setStep("otp");  // Only transition to OTP if email has been set
+        }
+    }, [email, step]);  // Dependency on both `email` and `step`
 
     const handleOtpSubmit = (response: { result: FormResponse }) => {
         const { result } = response;
@@ -37,12 +44,7 @@ const Signup: React.FC = () => {
             toast.error(result.message);
             return;
         }
-    
-        if (!result.otp) {
-            toast.error("OTP is missing from response.");
-            return;
-        }
-    
+        
         toast.success("OTP verified", { autoClose: 2000 });
         setStep("signup");
     };
@@ -50,7 +52,7 @@ const Signup: React.FC = () => {
 
     const handleSignupSubmit = (response: { result: FormResponse }) => {
         const { result } = response;
-        
+
         if (!result.success) {
             toast.error(result.message);
             return;
@@ -82,6 +84,7 @@ const Signup: React.FC = () => {
                     buttonText="Verify OTP"
                     onSubmitSuccess={handleOtpSubmit}
                     ariaLabel="OTP Verification Form"
+                    email={email}
                 />
             )}
             {step === "signup" && (
@@ -95,6 +98,7 @@ const Signup: React.FC = () => {
                     linkHref="/login"
                     ariaLabel="Sign Up Form"
                     onSubmitSuccess={handleSignupSubmit}
+                    email={email}
                 />
             )}
         </div>

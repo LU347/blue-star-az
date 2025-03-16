@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import styles from './FormComponent.module.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react'; // 🔹 Import loader icon
 import { FormResponse } from '@/app/types/auth';
 
@@ -31,6 +31,7 @@ interface FormComponentProps {
     linkHref?: string;
     ariaLabel: string;
     pattern?: RegExp;
+    email?: string;
     onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
     onSubmitSuccess?: (response: { result: FormResponse }) => void;
@@ -46,6 +47,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     linkText,
     linkHref,
     ariaLabel,
+    email,
     onSubmitSuccess,
     onSubmitError,
 }) => {
@@ -56,6 +58,15 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const [formData, setFormData] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false); // 🔹 Loading state
 
+    useEffect(() => {
+        if (email) {
+            setFormData((prev) => ({
+                ...prev,
+                email, // Set the email once, if passed as prop
+            }));
+        }
+    }, [email]); // Only run once when email prop changes
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -64,7 +75,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true); // 🔹 Start loading
-
+        
         try {
             const response = await fetch(API_URL + action, {
                 method: 'POST',
