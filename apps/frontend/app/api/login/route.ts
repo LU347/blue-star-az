@@ -51,7 +51,8 @@ export async function POST(req: Request) {
         }
         return NextResponse.json({
             message: "Login successful",
-            token: data.token || null
+            token: data.token || null,
+            user: data.user || null
         }, { status: 200 });
     } catch (error) {
         const errorMessage = (error as Error).message || 'Internal Server Error';

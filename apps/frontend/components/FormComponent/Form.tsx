@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react'; // 🔹 Import loader icon
 import { FormResponse } from '@/app/types/auth';
 
-let API_URL = "http://localhost:3000/api/"; 
+let API_URL = "http://localhost:3001/api/"; 
 
 interface FormField {
     name: string;

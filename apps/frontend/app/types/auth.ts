@@ -23,9 +23,11 @@ export interface LoginUserRequest {
 
 export interface FormResponse {
     token: any;
+    user: any;
     message: string;
     data?: {
-        token?: string
+        token?: string,
+        
     };
     status?: string
 }
