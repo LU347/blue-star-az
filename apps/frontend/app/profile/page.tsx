@@ -76,7 +76,7 @@ const Profile: React.FC = () => {
     if (isChecking) return <Typography align="center">Checking authentication...</Typography>;
     if (!token) return null;
     // console.log(token);
-    
+
     const handleEditClick = (field: keyof UserProfile) => {
         setCurrentField(field);
         setNewValue(userProfile[field] ?? "");
@@ -88,13 +88,18 @@ const Profile: React.FC = () => {
     };
 
     const handleSave = () => {
+        setIsSubmitting(true);
         if (currentField) {
             setUserProfile((prev) => ({
                 ...prev,
                 [currentField]: newValue,
             }));
         }
+        // Simulate API call or actually perform it
+        setTimeout(() => {
+            setIsSubmitting(false);
         handleClose();
+       }, 500);
     };
 
     return (

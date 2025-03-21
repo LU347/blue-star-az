@@ -31,3 +31,17 @@ export interface FormResponse {
     };
     status?: string
 }
+
+
+export interface User {
+    id: number;
+    email: string;
+    password: string;
+    userType: string;
+    gender: string;
+    createdAt: string;
+    updatedAt: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+}

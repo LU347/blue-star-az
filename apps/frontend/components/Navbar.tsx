@@ -75,7 +75,7 @@ export default function Navbar() {
                     <>
                         {user ? (
                             <Link href="/profile" className="px-4 py-2 rounded">
-                                {user.firstName + " " + user.lastName}
+                                {`${user.firstName ?? "Guest"} ${user.lastName ?? ""}`.trim()}
                             </Link>
                         ) : (
                             <Loader2 className="animate-spin w-5 h-5" />

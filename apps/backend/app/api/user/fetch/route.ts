@@ -13,10 +13,13 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: authResponse.error }, { status: 401 });
         }
         // Get the user ID from the decoded token
-        const userId = (authResponse.user as JwtPayload).userId || null;
+        const userId = (authResponse.user as JwtPayload).userId;
         // Fetch user details from the database
+        if (!userId || typeof userId !== 'number') {
+           return NextResponse.json({ error: 'Invalid user ID in token' }, { status: 400 });
+        }
         const user = await prisma.user.findUnique({
-            where: { id: Number(userId) },
+            where: { id: userId },
         });
 
         if (!user) {

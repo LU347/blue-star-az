@@ -24,11 +24,11 @@ export default function Dashboard() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ token : token }), // ✅ Send token in the request body
                 });
-                
-
-                if (!res.ok) throw new Error("Network error");
-
                 const data = await res.json();
+                if (!res.ok) {
+                    const errorMessage = data.message || "Network error";
+                    throw new Error(errorMessage);
+                }
                 if (data?.data) dispatch(setUser({ user: data.data, token }));
             } catch (error) {
                 console.error("Error:", error);
