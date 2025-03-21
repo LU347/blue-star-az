@@ -47,8 +47,8 @@ const Login: React.FC = () => {
             toast.error("Error logging in, please try again", { autoClose: 2000 });
         }
     };
-    const handleLoginError = (error: string) => {
-        toast.error(error);
+    const handleLoginError = (error: any) => {
+        toast.error(error.message);
     };
     return (
         <div className="flex flex-col items-center justify-center h-screen">
