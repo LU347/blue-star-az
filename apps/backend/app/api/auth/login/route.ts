@@ -73,7 +73,7 @@ export async function POST(req: Request) {
             { expiresIn: '1h' }
         );
 
-        return NextResponse.json({ message: Status.LOGIN_SUCCESS, token }, { status: 200 });
+        return NextResponse.json({ message: Status.LOGIN_SUCCESS, token , user}, { status: 200 });
     } catch (error) {
         console.error("Login error:", error);
         return NextResponse.json({ error: UserError.INTERNAL_ERR }, { status: 500 });

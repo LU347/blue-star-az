@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "../components/Navbar";
 import { ToastContainer } from "react-toastify";
+import ReduxProvider from "./providers/ReduxProvider"; // ✅ Corrected import
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -20,18 +22,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
-        <Navbar />
-       
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ReduxProvider>
+          <Navbar />  {/* ✅ Moved Navbar inside ReduxProvider */}
+          <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+          {children}  {/* ✅ No duplicate */}
+        </ReduxProvider>
       </body>
     </html>
   );

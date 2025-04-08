@@ -50,10 +50,10 @@ const Profile: React.FC = () => {
     const { token, isChecking } = useToken();
     const [userProfile, setUserProfile] = useState<UserProfile>(initialUserProfile);
     const [open, setOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentField, setCurrentField] = useState<keyof UserProfile | null>(null);
     const [newValue, setNewValue] = useState<string>("");
     const [errors, setErrors] = useState<Record<string, string>>({});
-
     const validateField = (field: keyof UserProfile, value: string) => {
         if (field === 'email' && value && !/\S+@\S+\.\S+/.test(value)) {
             return 'Invalid email format';
@@ -75,6 +75,7 @@ const Profile: React.FC = () => {
 
     if (isChecking) return <Typography align="center">Checking authentication...</Typography>;
     if (!token) return null;
+    // console.log(token);
 
     const handleEditClick = (field: keyof UserProfile) => {
         setCurrentField(field);
@@ -87,13 +88,18 @@ const Profile: React.FC = () => {
     };
 
     const handleSave = () => {
+        setIsSubmitting(true);
         if (currentField) {
             setUserProfile((prev) => ({
                 ...prev,
                 [currentField]: newValue,
             }));
         }
+        // Simulate API call or actually perform it
+        setTimeout(() => {
+            setIsSubmitting(false);
         handleClose();
+       }, 500);
     };
 
     return (

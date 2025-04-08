@@ -23,9 +23,25 @@ export interface LoginUserRequest {
 
 export interface FormResponse {
     token: any;
+    user: any;
     message: string;
     data?: {
-        token?: string
+        token?: string,
+        
     };
     status?: string
+}
+
+
+export interface User {
+    id: number;
+    email: string;
+    password: string;
+    userType: string;
+    gender: string;
+    createdAt: string;
+    updatedAt: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
 }
